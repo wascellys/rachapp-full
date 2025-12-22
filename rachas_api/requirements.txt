@@ -1,0 +1,13 @@
+Django
+djangorestframework
+django-allauth==65.13.1
+dj-rest-auth==7.0.1
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+python-decouple==3.8
+psycopg2-binary==2.9.11
+pillow
+requests==2.32.5
+cryptography
+gunicorn
+whitenoise

@@ -1,0 +1,62 @@
+/* ===== Card 3D ===== */
+.card-3d {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform, box-shadow;
+  border-radius: 8px;
+}
+
+/* ===== Borda com Brilho RGB Dinâmico ===== */
+.card-3d > div:first-child {
+  transition:
+    box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+    background 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 30px 0px rgba(var(--rgb-glow, 100, 100, 255), 0.5),
+    inset 0 0 30px 0px rgba(var(--rgb-glow, 100, 100, 255), 0.1);
+}
+
+/* ===== Glow Dinâmico (Brilho de Superfície) ===== */
+.card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    transparent 50%
+  );
+  opacity: var(--glow-opacity, 0);
+  transition: opacity 0.15s ease-out;
+}
+
+/* ===== Anti seleção ===== */
+.card-3d,
+.card-3d * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== Responsividade ===== */
+@media (max-width: 768px) {
+  .card-3d {
+    transition:
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      box-shadow 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+/* ===== Acessibilidade ===== */
+@media (prefers-reduced-motion: reduce) {
+  .card-3d,
+  .card-glow,
+  .card-3d > div:first-child {
+    transition: none;
+  }
+}

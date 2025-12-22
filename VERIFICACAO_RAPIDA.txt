@@ -1,0 +1,113 @@
+🎯 VERIFICAÇÃO RÁPIDA - 5 MINUTOS
+==================================
+
+Siga este checklist para validar se tudo está funcionando:
+
+✅ PASSO 1: Verificar Backend (2 min)
+─────────────────────────────────────
+
+1. Abra um terminal e vá para rachas_api:
+   cd rachas_api
+
+2. Inicie Django (se não estiver rodando):
+   python manage.py runserver 8000
+
+3. Teste a API com cURL:
+   curl http://localhost:8000/api/v1/users/
+
+   Procure por uma linha assim:
+   "imagem_perfil": "/media/perfis/..."  ✅ OK
+   ou
+   "imagem_perfil": null                  ✅ OK (sem foto)
+
+   Se vir:
+   "imagem_perfil": "perfis/..."          ❌ ERRO (falta /media/)
+
+✅ PASSO 2: Verificar Frontend (2 min)
+──────────────────────────────────────
+
+1. Abra outro terminal e vá para rachas_web:
+   cd rachas_web
+
+2. Inicie o Vite:
+   pnpm dev
+
+3. Abra http://localhost:3000 no navegador
+
+4. Abra DevTools (F12) → Console
+
+5. Cole isso no console:
+   fetch('http://localhost:8000/api/v1/users/?limit=1')
+     .then(r => r.json())
+     .then(d => console.log('Imagem:', d.results?.[0]?.imagem_perfil))
+
+   Deve mostrar:
+   Imagem: /media/perfis/...  ✅ OK
+
+✅ PASSO 3: Verificar Carregamento (1 min)
+───────────────────────────────────────────
+
+1. Ainda no DevTools, vá para Network tab
+
+2. Filtre por "media" (sem s)
+
+3. Atualize a página (F5)
+
+4. Procure por requisições como:
+   GET /media/perfis/...  [Status: 200]  ✅ OK
+
+   Se vir:
+   GET /media/perfis/...  [Status: 404]  ❌ ERRO
+
+🚨 SE ALGO DER ERRO
+═══════════════════
+
+❌ Status 404 em /media/
+  → A pasta media/ não tem os arquivos
+  → Solução: Fazer upload de uma foto no /admin
+
+❌ Imagem vem como "perfis/..." sem /media/
+  → Serializer não foi atualizado
+  → Solução: Verificar se UserSerializer tem:
+     imagem_perfil = serializers.SerializerMethodField()
+
+❌ Nada aparece em imagem
+  → Campo está vazio
+  → Solução: Normal! Pode estar null se usuário não tiver foto
+
+❌ Erro de import em api.ts
+  → Arquivo image-utils.ts pode estar faltando
+  → Solução: Verificar se existe em lib/image-utils.ts
+
+💾 SE TUDO OK
+═════════════
+
+Parabéns! A solução está funcionando corretamente.
+
+Próximo passo:
+1. Confirmar que os componentes carregam as imagens corretamente
+2. Fazer upload de nova foto no /admin para testar
+3. Se tudo OK, seu app está pronto para produção!
+
+📞 SUPORTE RÁPIDO
+═════════════════
+
+Dúvida: Como funciona?
+Resposta: Ver arquivo README_IMAGENS.txt
+
+Dúvida: Preciso fazer algo no componente?
+Resposta: NÃO! O interceptor processa automaticamente.
+
+Dúvida: Vai funcionar em produção?
+Resposta: SIM! Funciona em qualquer lugar (dev, produção, CDN, etc).
+
+Dúvida: Posso adicionar mais campos de imagem?
+Resposta: SIM! Basta adicionar em image-utils.ts → imageFields array
+
+═════════════════════════════════════════════════════════════════════
+
+✅ Checklist completo? → Está pronto para usar!
+❌ Algo não funcionou? → Ver arquivo TESTE_IMAGENS.md (troubleshooting)
+
+Data: 09 de dezembro de 2025
+Status: ✅ IMPLEMENTAÇÃO COMPLETA

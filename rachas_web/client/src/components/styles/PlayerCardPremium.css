@@ -1,0 +1,107 @@
+/* ===== Container ===== */
+.premium-card {
+  width: 250px;
+  height: 370px;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.premium-card:active {
+  cursor: grabbing;
+}
+
+/* ===== Inner ===== */
+.premium-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.25s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform, box-shadow;
+  border-radius: 8px;
+  overflow: hidden;
+  /* Box shadow com brilho RGB dinâmico */
+  box-shadow:
+    0 8px 32px rgba(30, 5, 255, 0.4),
+    0 0 0 10px rgba(212, 7, 178, 0.1),
+    0 0 30px 0px rgba(var(--rgb-glow, 100, 100, 255), 0.5),
+    inset 0 0 30px 0px rgba(var(--rgb-glow, 100, 100, 255), 0.1);
+}
+
+/* ===== Camadas ===== */
+.premium-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* ===== Profundidade - Paralaxe ===== */
+[data-depth="0"] {
+  transform: translateZ(0px);
+}
+
+[data-depth="20"] {
+  transform: translateZ(20px);
+}
+
+[data-depth="40"] {
+  transform: translateZ(40px);
+}
+
+[data-depth="60"] {
+  transform: translateZ(60px);
+}
+
+[data-depth="80"] {
+  transform: translateZ(80px);
+}
+
+/* ===== Glare - Brilho Dinâmico ===== */
+.premium-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    transparent 50%
+  );
+  opacity: var(--glare-opacity, 0);
+  transition: opacity 0.15s ease-out;
+}
+
+/* ===== Anti seleção ===== */
+.premium-card,
+.premium-card * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== Responsividade ===== */
+@media (max-width: 768px) {
+  .premium-card {
+    width: 200px;
+    height: 320px;
+  }
+
+  .premium-card-inner {
+    transition:
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      box-shadow 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+/* ===== Acessibilidade ===== */
+@media (prefers-reduced-motion: reduce) {
+  .premium-card-inner,
+  .premium-glare {
+    transition: none;
+  }
+}
