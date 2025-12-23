@@ -1,27 +1,23 @@
-FROM node:20-alpine as builder
+# Estágio de Build
+FROM node:20-alpine AS build-stage
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-
-# Instalar pnpm e dependências
-RUN npm install -g pnpm && \
-    pnpm install --frozen-lockfile
+COPY package*.json ./
+RUN npm install
 
 COPY . .
+RUN npm run build
 
-# Build do Vite
-RUN pnpm build
+# Estágio de Produção
+FROM nginx:alpine AS production-stage
 
-# Stage final - serve com node
-FROM node:20-alpine
+# Copiar os arquivos de build para o diretório do Nginx
+COPY --from=build-stage /app/dist/public /usr/share/nginx/html
 
-WORKDIR /app
+# Copiar configuração personalizada do Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN npm install -g serve
+EXPOSE 80
 
-COPY --from=builder /app/dist /app/dist
-
-EXPOSE 3000
-
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]
