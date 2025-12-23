@@ -68,7 +68,7 @@ export function SelectPremioModal({
     }
   };
 
-  console.log("Premios:", premios);
+
 
   const confirmarPremio = async () => {
     if (!selectedPremioId) return;
