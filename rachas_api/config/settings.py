@@ -100,6 +100,9 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
     "http://192.168.0.7:3000",
+    "https://rachapp-full-production.up.railway.app",
+    "https://racha-front-production.up.railway.app"
+
     # Adicione seu dominio em producao:
     # "https://seu_dominio.com",
 ]
