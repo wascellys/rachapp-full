@@ -7,6 +7,13 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# Build Arguments (Injects env vars during build time)
+ARG VITE_API_URL
+ARG VITE_AUTH_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_AUTH_URL=$VITE_AUTH_URL
+
 RUN npm run build
 
 # Estágio de Produção
