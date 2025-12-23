@@ -3,8 +3,8 @@ import { getImageUrl } from "./image-utils";
 
 // URL base da API
 // Usando proxy do Vite para evitar problemas de CORS e mixed content
-const API_URL = import.meta.env.VITE_API_URL || "http://192.168.0.7:8000/api/v1";
-const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://192.168.0.7:8000/api/auth";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+const AUTH_URL = import.meta.env.VITE_AUTH_URL || "http://localhost:8000/api/auth";
 
 // Instância do Axios
 const api = axios.create({
