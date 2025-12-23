@@ -16,3 +16,4 @@ pillow
 cryptography
 rembg
 onnxruntime
+django-storages
