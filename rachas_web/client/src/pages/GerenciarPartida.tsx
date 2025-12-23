@@ -27,6 +27,7 @@ import {
   FaUserPlus,
   FaFlagCheckered,
   FaHistory,
+  FaTrophy,
 } from "react-icons/fa";
 import { TbSettings, TbTrash, TbCircleCheckFilled } from "react-icons/tb";
 import {
@@ -58,6 +59,8 @@ interface JogadorPartida {
   assistencias: number;
 }
 
+import { SelectPremioModal } from "@/components/SelectPremioModal";
+
 export default function GerenciarPartida() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/partida/:id/gerenciar");
@@ -75,12 +78,14 @@ export default function GerenciarPartida() {
   // Estados para modais
   const [showAddJogador, setShowAddJogador] = useState(false);
   const [showRegistrarGol, setShowRegistrarGol] = useState(false);
+  const [showSelectPremio, setShowSelectPremio] = useState(false);
   const [selectedJogadorId, setSelectedJogadorId] = useState<
     string | undefined
   >(undefined);
   const [selectedAssistenciaId, setSelectedAssistenciaId] =
     useState<string>("none");
   const [jogadorGol, setJogadorGol] = useState<JogadorPartida | null>(null);
+  const [jogadorPremio, setJogadorPremio] = useState<JogadorPartida | null>(null);
 
   useEffect(() => {
     if (partidaId) {
@@ -153,6 +158,11 @@ export default function GerenciarPartida() {
     setJogadorGol(jogador);
     setSelectedAssistenciaId("none");
     setShowRegistrarGol(true);
+  };
+
+  const abrirModalPremio = (jogador: JogadorPartida) => {
+    setJogadorPremio(jogador);
+    setShowSelectPremio(true);
   };
 
   const registrarGol = async () => {
@@ -316,13 +326,25 @@ export default function GerenciarPartida() {
 
                     {/* Ações */}
                     {partida.status !== "FINALIZADA" && (
-                      <Button
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => abrirModalGol(jp)}
-                      >
-                        <FaFutbol className="mr" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 hover:text-yellow-700"
+                          onClick={() => abrirModalPremio(jp)}
+                          title="Dar prêmio"
+                        >
+                           <FaTrophy />
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => abrirModalGol(jp)}
+                          title="Registrar gol"
+                        >
+                          <FaFutbol className="mr" /> 
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -427,6 +449,22 @@ export default function GerenciarPartida() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Selecionar Premio */}
+      {jogadorPremio && (
+        <SelectPremioModal
+          open={showSelectPremio}
+          onOpenChange={setShowSelectPremio}
+          rachaId={partida?.racha}
+          jogadorId={jogadorPremio.jogador.id}
+          jogadorNome={`${jogadorPremio.jogador.first_name} ${jogadorPremio.jogador.last_name}`}
+          partidaId={partidaId!}
+          onSuccess={() => {
+            // Se quisesse recarregar a lista, poderia, mas premios nao aparecem na lista simples por enquanto
+            // carregarDados(); 
+          }}
+        />
+      )}
     </div>
   );
 }

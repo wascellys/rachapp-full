@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, Trash2, Edit2, Save, X } from "lucide-react";
+import { ArrowLeft, Clock, Trash2, Edit2, Save, X, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -38,14 +38,33 @@ interface Registro {
   criado_em: string;
 }
 
+interface Premio {
+  id: string;
+  nome: string;
+  valor_pontos: number;
+}
+
+interface PremioPartida {
+  id: string;
+  partida: string;
+  premio: Premio;
+  jogador: Jogador;
+  criado_em: string;
+}
+
 interface Partida {
   id: string;
   racha: string;
   data_inicio: string;
   data_fim: string | null;
   registros: Registro[];
+  premios_partida: PremioPartida[];
   racha_is_admin: boolean;
 }
+
+type TimelineEvent = 
+  | { type: 'GOL', data: Registro, timestamp: number }
+  | { type: 'PREMIO', data: PremioPartida, timestamp: number };
 
 export default function TimelinePartida() {
   const [, params] = useRoute("/partida/:id/timeline");
@@ -164,10 +183,19 @@ export default function TimelinePartida() {
 
   if (!partida) return null;
 
-  // Ordenar registros do mais recente para o mais antigo
-  const registrosOrdenados = [...partida.registros].sort(
-    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
-  );
+  // Combinar e ordenar registros e prêmios do mais recente para o mais antigo
+  const eventos: TimelineEvent[] = [
+    ...partida.registros.map(r => ({ 
+      type: 'GOL' as const, 
+      data: r, 
+      timestamp: new Date(r.criado_em).getTime() 
+    })),
+    ...partida.premios_partida.map(p => ({ 
+      type: 'PREMIO' as const, 
+      data: p, 
+      timestamp: new Date(p.criado_em).getTime() 
+    }))
+  ].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="bg-background">
@@ -191,32 +219,37 @@ export default function TimelinePartida() {
       </header>
 
       <main className="container max-w-2xl mx-auto p-4 space-y-6">
-        {registrosOrdenados.length === 0 ? (
+        {eventos.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhum evento registrado nesta partida ainda.</p>
           </div>
         ) : (
           <div className="relative border-l-2 border-border space-y-8 pl-8 py-4">
-            {registrosOrdenados.map(registro => (
-              <div key={registro.id} className="relative">
+            {eventos.map((evento) => (
+              <div key={evento.type === 'GOL' ? evento.data.id : evento.data.id} className="relative">
                 {/* Marcador da linha do tempo */}
-                <div className="absolute -left-[41px] top-15 h-5 w-5 rounded-full bg-primary border-4 border-background flex items-center justify-center"></div>
+                <div className={`absolute -left-[41px] top-15 h-5 w-5 rounded-full border-4 border-background flex items-center justify-center ${
+                  evento.type === 'GOL' ? 'bg-primary' : 'bg-yellow-500'
+                }`}></div>
 
                 <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-2 xl:mb-4 justify-content-center align-items-center">
-                      <div className="flex items-center gap-2 text-sm font-medium text-primary ">
-                        <Clock className="h-4 w-4" />
-                        {formatarHora(registro.criado_em)}
+                      <div className={`flex items-center gap-2 text-sm font-medium ${
+                        evento.type === 'GOL' ? 'text-primary' : 'text-yellow-600'
+                      }`}>
+                        {evento.type === 'GOL' ? <Clock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
+                        {formatarHora(evento.data.criado_em)}
                       </div>
-                      {partida.racha_is_admin && (
+                      
+                      {evento.type === 'GOL' && partida.racha_is_admin && (
                         <div className="flex gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          onClick={() => abrirModalEdicao(registro)}
+                          onClick={() => abrirModalEdicao(evento.data)}
                         >
                           <Edit2 className="h-2 w-2" />
                         </Button>
@@ -224,7 +257,7 @@ export default function TimelinePartida() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRemoverRegistro(registro.id)}
+                          onClick={() => handleRemoverRegistro(evento.data.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -232,25 +265,46 @@ export default function TimelinePartida() {
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">⚽</span>
-                        <span className="font-bold text-foreground text-lg">
-                          {registro.jogador_gol.first_name ||
-                            registro.jogador_gol.username}
-                        </span>
-                      </div>
-
-                      {registro.jogador_assistencia && (
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9">
-                          <span>👟 Assistência:</span>
-                          <span className="font-medium text-foreground">
-                            {registro.jogador_assistencia.first_name ||
-                              registro.jogador_assistencia.username}
+                    {evento.type === 'GOL' ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">⚽</span>
+                          <span className="font-bold text-foreground text-lg">
+                            {evento.data.jogador_gol.first_name ||
+                              evento.data.jogador_gol.username}
                           </span>
                         </div>
-                      )}
-                    </div>
+
+                        {evento.data.jogador_assistencia && (
+                          <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9">
+                            <span>👟 Assistência:</span>
+                            <span className="font-medium text-foreground">
+                              {evento.data.jogador_assistencia.first_name ||
+                                evento.data.jogador_assistencia.username}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                         <div className="flex items-center gap-2">
+                          <span className="text-2xl">🏆</span>
+                          <span className="font-bold text-foreground text-lg">
+                            {evento.data.premio.nome}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9">
+                            <span>Para:</span>
+                            <span className="font-medium text-foreground">
+                              {evento.data.jogador.first_name ||
+                                evento.data.jogador.username}
+                            </span>
+                             <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">
+                              +{evento.data.premio.valor_pontos} pts
+                            </span>
+                          </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>

@@ -48,7 +48,7 @@ interface Partida {
   criado_em: string;
   horario: string;
   local: string;
-  status: string;
+  status: boolean;
 }
 
 interface Jogador {
@@ -389,8 +389,8 @@ export default function RachaDetails() {
                       <div className="flex items-center gap-2 ml-4">
                         <Badge
                           variant={
-                            partida.status === "FINALIZADA"
-                              ? "secondary"
+                            partida.status === false
+                              ? "destructive"
                               : "default"
                           }
                         >
@@ -454,8 +454,8 @@ export default function RachaDetails() {
                           <td className="p-4 text-center">
                             <Badge
                               variant={
-                                partida.status === "FINALIZADA"
-                                  ? "secondary"
+                                partida.status === false
+                                  ? "destructive"
                                   : "default"
                               }
                             >

@@ -448,9 +448,13 @@ class PremioViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Filtrar prêmios dos rachas do usuário
-        return Premio.objects.filter(
+        queryset = Premio.objects.filter(
             racha__administrador=self.request.user
         )
+        racha_id = self.request.query_params.get('racha')
+        if racha_id:
+            queryset = queryset.filter(racha_id=racha_id)
+        return queryset
     
     def perform_create(self, serializer):
         """Cria prêmio apenas se usuário é admin do racha"""
@@ -606,6 +610,41 @@ class PartidaViewSet(viewsets.ModelViewSet):
         
         return Response({'mensagem': 'Registro removido com sucesso'})
 
+    @action(detail=True, methods=['post'])
+    def associar_premio(self, request, pk=None):
+        """Associa um prêmio a um jogador na partida"""
+        partida = self.get_object()
+        jogador_id = request.data.get('jogador_id')
+        premio_id = request.data.get('premio_id')
+
+        if not jogador_id or not premio_id:
+            return Response(
+                {'erro': 'jogador_id e premio_id são obrigatórios'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        jogador = get_object_or_404(User, id=jogador_id)
+        premio = get_object_or_404(Premio, id=premio_id)
+
+        # Validar se o prêmio pertence ao racha da partida
+        if premio.racha != partida.racha:
+             return Response(
+                {'erro': 'O prêmio não pertence ao racha desta partida'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Criar a associação
+        premio_partida = PremioPartida.objects.create(
+            partida=partida,
+            jogador=jogador,
+            premio=premio
+        )
+
+        return Response({
+            'mensagem': f'Prêmio {premio.nome} associado a {jogador.first_name}',
+            'id': premio_partida.id
+        }, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['put'])
     def editar_registro(self, request, pk=None):
         """Edita um registro de gol/assistência"""
@@ -671,6 +710,7 @@ class PartidaViewSet(viewsets.ModelViewSet):
             )
         
         partida.data_fim = timezone.now()
+        partida.status = False
         partida.save()
         
         serializer = PartidaDetailSerializer(partida)
