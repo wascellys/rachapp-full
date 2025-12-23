@@ -23,7 +23,9 @@ FROM nginx:alpine AS production-stage
 COPY --from=build-stage /app/dist/public /usr/share/nginx/html
 
 # Copiar configuração personalizada do Nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar configuração personalizada do Nginx para a pasta de templates
+# O Nginx vai processar as variáveis de ambiente (como $PORT) e gerar o conf final
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 
