@@ -224,7 +224,8 @@ class RachaViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Cria racha e define o usuário como administrador"""
-        racha = serializer.save(administrador=self.request.user)
+        racha = serializer.save()
+        racha.administrador.add(self.request.user)
         # Adiciona o criador como jogador
         JogadoresRacha.objects.create(racha=racha, jogador=self.request.user)
     
