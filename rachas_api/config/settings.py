@@ -193,14 +193,14 @@ CORS_ALLOW_CREDENTIALS = True
 # -------------------------------------
 # ☁️ Cloudflare R2 Storage
 # -------------------------------------
-AWS_ACCESS_KEY_ID = config("R2_ACCESS_KEY_ID", default=None)
-AWS_SECRET_ACCESS_KEY = config("R2_SECRET_ACCESS_KEY", default=None)
-AWS_STORAGE_BUCKET_NAME = config("R2_BUCKET_NAME", default=None)
-AWS_S3_ENDPOINT_URL = config("R2_ENDPOINT_URL", default=None)
-AWS_S3_REGION_NAME = config("R2_REGION_NAME", default="auto")
-AWS_S3_SIGNATURE_VERSION = "s3v4"
-AWS_DEFAULT_ACL = None
-AWS_QUERYSTRING_AUTH = False
+# AWS_ACCESS_KEY_ID = config("R2_ACCESS_KEY_ID", default=None)
+# AWS_SECRET_ACCESS_KEY = config("R2_SECRET_ACCESS_KEY", default=None)
+# AWS_STORAGE_BUCKET_NAME = config("R2_BUCKET_NAME", default=None)
+# AWS_S3_ENDPOINT_URL = config("R2_ENDPOINT_URL", default=None)
+# AWS_S3_REGION_NAME = config("R2_REGION_NAME", default="auto")
+# AWS_S3_SIGNATURE_VERSION = "s3v4"
+# AWS_DEFAULT_ACL = None
+# AWS_QUERYSTRING_AUTH = False
 
 # -------------------------------------
 # 📁 Arquivos estáticos e de mídia
@@ -213,31 +213,59 @@ AWS_QUERYSTRING_AUTH = False
 #     MEDIA_ROOT = BASE_DIR / "media"
 # else:
 # Produção (Railway + Cloudflare R2)
-STATIC_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/"
-MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/"
+# STATIC_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/"
+# MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/"
+#
+# STORAGES = {
+#     "default": {
+#         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+#         "OPTIONS": {
+#             "access_key": AWS_ACCESS_KEY_ID,
+#             "secret_key": AWS_SECRET_ACCESS_KEY,
+#             "bucket_name": AWS_STORAGE_BUCKET_NAME,
+#             "endpoint_url": AWS_S3_ENDPOINT_URL,
+#         },
+#     },
+#     "staticfiles": {
+#         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+#         "OPTIONS": {
+#             "access_key": AWS_ACCESS_KEY_ID,
+#             "secret_key": AWS_SECRET_ACCESS_KEY,
+#             "bucket_name": AWS_STORAGE_BUCKET_NAME,
+#             "endpoint_url": AWS_S3_ENDPOINT_URL,
+#             "location": "static",
+#         },
+#     },
+# }
+try:
+    from decouple import config
+except ImportError:
+    import os
+    config = os.environ.get
 
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            "access_key": AWS_ACCESS_KEY_ID,
-            "secret_key": AWS_SECRET_ACCESS_KEY,
-            "bucket_name": AWS_STORAGE_BUCKET_NAME,
-            "endpoint_url": AWS_S3_ENDPOINT_URL,
-        },
-    },
-    "staticfiles": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-        "OPTIONS": {
-            "access_key": AWS_ACCESS_KEY_ID,
-            "secret_key": AWS_SECRET_ACCESS_KEY,
-            "bucket_name": AWS_STORAGE_BUCKET_NAME,
-            "endpoint_url": AWS_S3_ENDPOINT_URL,
-            "location": "static",
-        },
-    },
+CLOUDFLARE_R2_CONFIG_OPTIONS = {
+    "bucket_name": config("CLOUDFLARE_R2_BUCKET"),
+    "default_acl": "public-read",  # or "private"
+    "signature_version": "s3v4",
+    "endpoint_url": config("CLOUDFLARE_R2_BUCKET_ENDPOINT"),
+    "access_key": config("CLOUDFLARE_R2_ACCESS_KEY"),
+    "secret_key": config("CLOUDFLARE_R2_SECRET_KEY"),
 }
 
+
+STATIC_URL = 'static/'
+
+# Introduced in Django 4.2
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
+    },
+}
 
 SITE_ID = 1
 
@@ -252,4 +280,4 @@ ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
 
 BASE_URL_SYSTEM = os.environ.get('BASE_URL_SYSTEM', 'http://127.0.0.1:8000')
-BASE_URL_IMAGES = MEDIA_URL if 'AWS_ACCESS_KEY_ID' in os.environ else f'{BASE_URL_SYSTEM}{MEDIA_URL}'
+# BASE_URL_IMAGES = MEDIA_URL if 'AWS_ACCESS_KEY_ID' in os.environ else f'{BASE_URL_SYSTEM}{MEDIA_URL}'
