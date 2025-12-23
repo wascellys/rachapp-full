@@ -462,7 +462,7 @@ class PremioViewSet(viewsets.ModelViewSet):
         racha_id = self.request.data.get('racha')
         racha = get_object_or_404(Racha, id=racha_id)
         
-        if racha.administrador != self.request.user:
+        if self.request.user not in racha.administrador.all():
             raise PermissionError("Você não é administrador deste racha")
         
         serializer.save()
@@ -498,7 +498,7 @@ class PartidaViewSet(viewsets.ModelViewSet):
         racha_id = self.request.data.get('racha')
         racha = get_object_or_404(Racha, id=racha_id)
         
-        if racha.administrador != self.request.user:
+        if self.request.user not in racha.administrador.all():
             raise PermissionError("Você não é administrador deste racha")
         
         serializer.save()

@@ -67,7 +67,7 @@ export default function NovaPartida() {
         valor_total: formData.valor_total
           ? parseFloat(formData.valor_total)
           : 0,
-        status: "AGENDADA",
+        status: true,
       };
 
       const response = await api.post("/partidas/", payload);
