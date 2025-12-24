@@ -300,11 +300,38 @@ class RachaViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['get'])
     def jogadores(self, request, pk=None):
-        """Lista jogadores do racha"""
+        """Lista todos os jogadores do racha (ativos e inativos)"""
         racha = self.get_object()
-        jogadores = racha.jogadores_racha.filter(ativo=True)
+        # Retornar todos para que o admin possa gerenciar
+        jogadores = racha.jogadores_racha.all()
         serializer = JogadoresRachaSerializer(jogadores, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def alterar_status_jogador(self, request, pk=None):
+        """Altera o status ativo/inativo de um jogador"""
+        racha = self.get_object()
+        
+        if request.user not in racha.administrador.all():
+            return Response(
+                {'erro': 'Apenas administradores podem alterar status de jogadores'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        jogador_id = request.data.get('jogador_id')
+        novo_status = request.data.get('ativo')
+        
+        if not jogador_id:
+            return Response({'erro': 'jogador_id obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if novo_status is None:
+             return Response({'erro': 'ativo (boolean) obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        jogador_racha = get_object_or_404(JogadoresRacha, racha=racha, jogador_id=jogador_id)
+        jogador_racha.ativo = novo_status
+        jogador_racha.save()
+        
+        return Response({'mensagem': f'Status alterado para {novo_status}'})
     
     @action(detail=True, methods=['delete'])
     def remover_jogador(self, request, pk=None):

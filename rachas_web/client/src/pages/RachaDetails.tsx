@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   FaTrophy,
   FaUsers,
@@ -155,6 +156,32 @@ export default function RachaDetails() {
     } catch (error) {
       console.error("Erro ao excluir prêmio:", error);
       toast.error("Erro ao excluir prêmio.");
+    }
+  };
+
+  const handleToggleStatus = async (jogadorRachaId: string, currentStatus: boolean, jogadorId: string) => {
+    try {
+      await api.post(`/rachas/${id}/alterar_status_jogador/`, {
+        jogador_id: jogadorId,
+        ativo: !currentStatus,
+      });
+      
+      toast.success(`Jogador ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+      
+      // Atualizar lista localmente para refletir a mudança
+      const fetchData = async () => {
+         const [rankingRes, jogadoresRes] = await Promise.all([
+             api.get(`/rachas/${id}/ranking/`),
+             api.get(`/rachas/${id}/jogadores/`)
+         ]);
+         setRanking(rankingRes.data);
+         setJogadores(jogadoresRes.data);
+      };
+      fetchData();
+      
+    } catch (error) {
+      console.error("Erro ao alterar status:", error);
+      toast.error("Erro ao alterar status do jogador.");
     }
   };
 
@@ -644,11 +671,17 @@ export default function RachaDetails() {
                             {new Date(item.data_entrada).toLocaleDateString()}
                           </td>
                           <td className="p-4 text-right">
-                            <Badge
-                              variant={item.ativo ? "default" : "secondary"}
-                            >
-                              {item.ativo ? "Ativo" : "Inativo"}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-2">
+                                {racha.is_admin && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">Status</span>
+                                        <Switch 
+                                            checked={item.ativo} 
+                                            onCheckedChange={() => handleToggleStatus(item.id, item.ativo, item.jogador.id)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
                           </td>
                         </tr>
                       ))}
