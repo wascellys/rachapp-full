@@ -203,10 +203,11 @@ class RankingJogadorSerializer(serializers.Serializer):
     presencas = serializers.IntegerField()
     premios_pontos = serializers.IntegerField()
     pontuacao_total = serializers.IntegerField()
+    jogador_username = serializers.CharField(required=False)
     
     class Meta:
         fields = [
-            'jogador_id', 'jogador_nome', 'posicao', 'gols',
+            'jogador_id', 'jogador_nome', 'jogador_username', 'posicao', 'gols',
             'assistencias', 'presencas', 'premios_pontos', 'pontuacao_total', 'jogador_imagem_perfil'
         ]
 
@@ -218,6 +219,7 @@ class RankingArtilhariaSerializer(serializers.Serializer):
     jogador_nome = serializers.CharField()
     gols = serializers.IntegerField()
     posicao = serializers.IntegerField()
+    jogador_username = serializers.CharField(required=False)
 
 
 class RankingAssistenciasSerializer(serializers.Serializer):
@@ -227,3 +229,4 @@ class RankingAssistenciasSerializer(serializers.Serializer):
     jogador_nome = serializers.CharField()
     assistencias = serializers.IntegerField()
     posicao = serializers.IntegerField()
+    jogador_username = serializers.CharField(required=False)

@@ -82,7 +82,7 @@ export default function Dashboard() {
       <Card className="bg-gradient-to-r from-background to-muted/20 border-primary/20">
         <CardContent className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl">
+            <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl rounded-full bg-background">
               <AvatarImage src={stats.imagem_perfil || undefined} className="object-cover" />
               <AvatarFallback className="text-4xl bg-muted">
                 {stats.nome.charAt(0)}
@@ -224,7 +224,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl">
+              <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl rounded-full bg-background">
                 <AvatarImage 
                   src={stats.melhor_garcom.imagem_perfil || undefined} 
                   className="object-cover"

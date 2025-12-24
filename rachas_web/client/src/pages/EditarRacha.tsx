@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EditarRacha() {
   const [, setLocation] = useLocation();
@@ -134,7 +135,26 @@ export default function EditarRacha() {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto py-0 space-y-6">
+        <Skeleton className="h-10 w-32" />
+        <div className="rounded-xl border shadow-sm p-6 space-y-6">
+           <Skeleton className="h-8 w-48" />
+           <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="grid grid-cols-3 gap-4">
+                 <Skeleton className="h-10 w-full" />
+                 <Skeleton className="h-10 w-full" />
+                 <Skeleton className="h-10 w-full" />
+              </div>
+           </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-0">

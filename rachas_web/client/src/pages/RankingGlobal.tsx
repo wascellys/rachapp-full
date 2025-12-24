@@ -139,7 +139,7 @@ export default function RankingGlobal() {
                             }}
                           >
                           <div className="flex items-center gap-3 cursor-pointer">
-                            <Avatar className="h-10 w-10 md:h-12 md:w-12 border-2 border-transparent group-hover:border-primary transition-all">
+                            <Avatar className="h-10 w-10 md:h-12 md:w-12 border-2 border-transparent group-hover:border-primary transition-all bg-background rounded-full">
                               <AvatarImage src={item.jogador_imagem_perfil || undefined} />
                               <AvatarFallback className="bg-primary/10 text-primary">
                                 {item.jogador_nome.charAt(0)}

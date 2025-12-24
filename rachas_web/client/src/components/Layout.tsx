@@ -83,7 +83,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer">
-                <Avatar>
+                <Avatar className="rounded-full bg-background">
                   <AvatarImage src={user?.imagem_perfil || ""} />
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {user?.first_name?.charAt(0) || user?.username?.charAt(0)}
@@ -91,7 +91,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
                   <p className="text-sm font-medium truncate">
-                    {user?.first_name} {user?.last_name}
+                    {user?.username}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {user?.posicao}
@@ -131,7 +131,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Avatar className="h-8 w-8 cursor-pointer">
+            <Avatar className="h-8 w-8 cursor-pointer rounded-full bg-background">
               <AvatarImage src={user?.imagem_perfil || ""} />
               <AvatarFallback className="bg-primary text-primary-foreground">
                 {user?.first_name?.charAt(0) || "U"}

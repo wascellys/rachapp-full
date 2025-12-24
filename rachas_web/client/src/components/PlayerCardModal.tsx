@@ -10,6 +10,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import * as htmlToImage from "html-to-image";
 import { PlayerCard } from "./PlayerCard";
 import { ShareCanvas } from "./ShareCanvas";
+import api from "@/lib/api";
 
 interface PlayerCardModalProps {
   children: React.ReactNode;
@@ -33,17 +34,20 @@ export function PlayerCardModal({ children, player }: PlayerCardModalProps) {
       // 1. Prepare player data, potentially handling CORS images
       let playerForShare = { ...player };
       let photoObjectUrl: string | null = null;
-
-      console.log(player);
-      
+          
       if (player.photo) {
         try {
-          // Attempt to fetch the image to see if it allows CORS
-          const response = await fetch(player.photo, { mode: 'cors' });
-          if (!response.ok) throw new Error("Image fetch failed");
+          // Use our backend proxy to fetch the image to avoid CORS issues with R2
+          // The proxy will return the image with appropriate headers or we treat it as same-origin
+          const proxyUrl = `/usuarios/proxy_image/?url=${encodeURIComponent(player.photo)}`;
           
-          // If successful, convert to blob url to avoid re-fetching issues during capture
-          const blob = await response.blob();
+          // Fetch from proxy
+          const response = await api.get(proxyUrl, { responseType: 'blob' });
+          
+          if (response.status !== 200) throw new Error("Image proxy failed");
+          
+          // Create object URL from the proxied blob
+          const blob = response.data;
           photoObjectUrl = URL.createObjectURL(blob);
           playerForShare.photo = photoObjectUrl;
           
@@ -67,7 +71,6 @@ export function PlayerCardModal({ children, player }: PlayerCardModalProps) {
           pixelRatio: 2,
           backgroundColor: "transparent",
           useCORS: true,
-          cacheBust: true,
           skipFonts: true,
         } as any);
       } catch (genError) {
@@ -81,7 +84,6 @@ export function PlayerCardModal({ children, player }: PlayerCardModalProps) {
                 pixelRatio: 2,
                 backgroundColor: "transparent",
                 useCORS: true,
-                cacheBust: true,
                 skipFonts: true,
             } as any);
         } else {

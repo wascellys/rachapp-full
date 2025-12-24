@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Jogador {
   id: string;
@@ -206,8 +207,30 @@ export default function GerenciarPartida() {
     }
   };
 
-  if (loading)
-    return <div className="p-8 text-center">Carregando partida...</div>;
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto py-0 space-y-6">
+        <div className="flex justify-between items-center">
+           <Skeleton className="h-10 w-32" />
+           <div className="flex gap-2">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-10" />
+           </div>
+        </div>
+        <div className="rounded-xl border shadow-sm">
+           <div className="p-6 flex justify-between">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-9 w-32" />
+           </div>
+           <div className="p-6 pt-0 space-y-4">
+              {[1, 2, 3].map((i) => (
+                 <Skeleton key={i} className="h-16 w-full" />
+              ))}
+           </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-0 space-y-6">

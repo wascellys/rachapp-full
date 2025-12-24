@@ -38,7 +38,17 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    let value = e.target.value;
+
+    if (e.target.id === "username") {
+      value = value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/\s+/g, "-"); // Replace spaces with hyphens
+    }
+
+    setFormData({ ...formData, [e.target.id]: value });
   };
 
   const handleSelectChange = (value: string) => {

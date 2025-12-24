@@ -23,6 +23,7 @@ import { PlayerCardModal } from "@/components/PlayerCardModal";
 import { Link } from "wouter";
 import { PremioModal } from "@/components/PremioModal";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface RachaDetails {
   id: string;
@@ -35,6 +36,7 @@ interface RachaDetails {
 interface RankingItem {
   jogador_id: string;
   jogador_nome: string;
+  jogador_username: string;
   jogador_imagem_perfil: string;
   posicao: string;
   gols: number;
@@ -198,7 +200,20 @@ export default function RachaDetails() {
     fetchData();
   }, [id]);
 
-  if (loading) return <div className="p-8 text-center">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+           <Skeleton className="h-8 w-1/3" />
+           <Skeleton className="h-4 w-1/4" />
+        </div>
+        <div className="space-y-4">
+           <Skeleton className="h-10 w-full" />
+           <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
   if (!racha)
     return <div className="p-8 text-center">Racha não encontrado</div>;
 
@@ -287,6 +302,7 @@ export default function RachaDetails() {
                           <PlayerCardModal
                             player={{
                               name: item.jogador_nome,
+                              username: item.jogador_username,
                               position: "JOG", // Posição padrão, pois não vem no ranking
                               overall: item.pontuacao_total,
                               stats: {
@@ -298,7 +314,7 @@ export default function RachaDetails() {
                             }}
                           >
                             <div className="flex items-center gap-3">
-                              <Avatar className="h-15 w-15 border rounded-full">
+                              <Avatar className="h-15 w-15 border rounded-full bg-background">
                                 {item.jogador_imagem_perfil ? (
                                   <AvatarImage
                                     src={
@@ -522,6 +538,7 @@ export default function RachaDetails() {
                     key={item.id}
                     player={{
                       name: `${item.jogador.first_name} ${item.jogador.last_name}`,
+                      username: item.jogador.username,
                       position: item.jogador.posicao,
                       overall: overall,
                       stats: stats,
@@ -579,6 +596,7 @@ export default function RachaDetails() {
                             <PlayerCardModal
                               player={{
                                 name: `${item.jogador.first_name} ${item.jogador.last_name}`,
+                                username: item.jogador.username,
                                 position: item.jogador.posicao,
                                 overall:
                                   ranking.find(

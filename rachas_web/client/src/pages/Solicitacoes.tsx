@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FaCheck, FaTimes, FaUserClock } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Solicitacao {
   id: string;
@@ -58,7 +59,21 @@ export default function Solicitacoes() {
     }
   };
 
-  if (loading) return <div className="p-8 text-center">Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           {[...Array(4)].map((_, i) => (
+             <Skeleton key={i} className="h-48 w-full rounded-xl" />
+           ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -95,7 +110,7 @@ export default function Solicitacoes() {
               </CardHeader>
               <CardContent className="pt-4">
                 <div className="flex items-center gap-4 mb-4">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-12 w-12 bg-background rounded-full" >
                     <AvatarImage src={solicitacao.jogador.imagem_perfil || ''} />
                     <AvatarFallback className="bg-primary/20 text-primary">
                       {solicitacao.jogador.first_name?.charAt(0) || solicitacao.jogador.username.charAt(0)}

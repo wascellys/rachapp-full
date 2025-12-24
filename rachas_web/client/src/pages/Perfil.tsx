@@ -30,6 +30,8 @@ import {
   FaCamera,
 } from "react-icons/fa";
 import { toast } from "sonner";
+import { ImageCropper } from "@/components/ImageCropper";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Perfil() {
   const { user, refreshUser } = useAuth();
@@ -44,6 +46,7 @@ export default function Perfil() {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [removeBg, setRemoveBg] = useState(false);
+  const [croppingImage, setCroppingImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -70,15 +73,34 @@ export default function Perfil() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData({ ...formData, imagem_perfil: file });
-
-      // Criar preview da imagem
+      
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
+        setCroppingImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+      
+      // Reset input value so same file can be selected again if cancelled
+      e.target.value = "";
     }
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Create a File from the Blob
+    const file = new File([croppedBlob], "profile-pic.jpg", { type: "image/jpeg" });
+    
+    setFormData({ ...formData, imagem_perfil: file });
+
+    // Update preview
+    const objectUrl = URL.createObjectURL(croppedBlob);
+    setPreviewUrl(objectUrl);
+    
+    // Close cropper
+    setCroppingImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setCroppingImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,7 +138,22 @@ export default function Perfil() {
     }
   };
 
-  if (!user) return <div className="p-8 text-center">Carregando...</div>;
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 p-8">
+        <div className="flex items-center gap-4 mb-8">
+           <Skeleton className="h-10 w-10 rounded-full" />
+           <div className="space-y-2">
+             <Skeleton className="h-8 w-48" />
+             <Skeleton className="h-4 w-64" />
+           </div>
+        </div>
+        <div className="grid gap-6">
+           <Skeleton className="h-[400px] w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-8">
@@ -137,7 +174,7 @@ export default function Perfil() {
             {/* Foto de Perfil */}
             <div className="flex flex-col items-center gap-4">
               <div className="relative group cursor-pointer">
-                <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
+                <Avatar className="w-32 h-32 border-4 border-background shadow-xl rounded-full bg-background">
                   <AvatarImage
                     src={previewUrl || undefined}
                     className="object-cover"
@@ -272,6 +309,16 @@ export default function Perfil() {
           </Button>
         </CardFooter>
       </Card>
+
+      {/* Image Cropper Modal */}
+      {croppingImage && (
+        <ImageCropper
+          imageSrc={croppingImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspect={1} // Square crop for profile picture
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import rembg
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.http import HttpResponse
 
 from .models import (
     User, Racha, JogadoresRacha, Premio, Partida,
@@ -52,6 +53,27 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserDetailSerializer
         return UserSerializer
     
+    @action(detail=False, methods=['get'])
+    def proxy_image(self, request):
+        """Proxy para imagens para evitar problemas de CORS"""
+        import requests
+        url = request.query_params.get('url')
+        if not url:
+            return Response({'erro': 'URL obrigatória'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Validar e buscar a imagem
+            response = requests.get(url, stream=True)
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('Content-Type')
+                return HttpResponse(response.content, content_type=content_type)
+            else:
+                return Response({'erro': 'Falha ao buscar imagem'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Erro no proxy de imagem: {e}")
+            return Response({'erro': 'Erro interno'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     @action(detail=False, methods=['get', 'put', 'patch'])
     def me(self, request):
         """Retorna ou atualiza dados do usuário autenticado"""
@@ -189,6 +211,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 ranking.append({
                     'jogador_id': user.id,
                     'jogador_nome': user.get_full_name() or user.username,
+                    'jogador_username': user.username,
                     'jogador_imagem_perfil': get_image_url(user.imagem_perfil),
                     'posicao_campo': user.posicao,
                     'gols': user.total_gols,
@@ -336,6 +359,7 @@ class RachaViewSet(viewsets.ModelViewSet):
             ranking.append({
                 'jogador_id': jogador_id,
                 'jogador_nome': jogador.get_full_name(),
+                'jogador_username': jogador.username,
                 'jogador_imagem_perfil': get_image_url(jogador.imagem_perfil) or '',
                 'gols': gols,
                 'posicao': idx + 1
@@ -370,6 +394,7 @@ class RachaViewSet(viewsets.ModelViewSet):
             ranking.append({
                 'jogador_id': jogador_id,
                 'jogador_nome': jogador.get_full_name(),
+                'jogador_username': jogador.username,
                 'jogador_imagem_perfil': get_image_url(jogador.imagem_perfil) or '',
                 'assistencias': assistencias,
                 'posicao': idx + 1
@@ -422,6 +447,7 @@ class RachaViewSet(viewsets.ModelViewSet):
             ranking.append({
                 'jogador_id': jogador.id,
                 'jogador_nome': jogador.get_full_name(),
+                'jogador_username': jogador.username,
                 'jogador_imagem_perfil': get_image_url(jogador.imagem_perfil) or '',
                 'posicao': jogador.posicao,
                 'gols': gols,

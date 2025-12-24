@@ -20,6 +20,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Racha {
   id: string;
@@ -53,7 +54,22 @@ export default function Home() {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center p-8">Carregando...</div>;
+    return (
+      <div className="space-y-8">
+         <div className="flex justify-between items-center">
+             <div className="space-y-2">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-4 w-64" />
+             </div>
+             <Skeleton className="h-10 w-32" />
+         </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+               <Skeleton key={i} className="h-48 w-full rounded-xl" />
+            ))}
+         </div>
+      </div>
+    );
   }
 
   return (

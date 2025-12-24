@@ -20,6 +20,7 @@ interface RGBColor {
 
 interface PlayerCardProps {
   name: string;
+  username?: string;
   position: string;
   overall: number;
   stats: {
@@ -138,6 +139,7 @@ function useCardTilt(disabled: boolean) {
 ========================= */
 export function PlayerCard({
   name,
+  username,
   position,
   overall,
   stats,
@@ -181,6 +183,11 @@ export function PlayerCard({
   const style = styles[cardType];
   const { ref, onMouseMove, onMouseLeave, handleTouchMove } =
     useCardTilt(disableTilt);
+
+  const displayName = name.length > 10 && username ? username : name;
+
+
+  console.log(name, username, displayName);
 
   return (
     <div
@@ -247,7 +254,7 @@ export function PlayerCard({
                     className="object-cover object-top drop-shadow-lg"
                   />
                   <AvatarFallback className="text-4xl font-bold">
-                    {name.charAt(0)}
+                    {displayName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -266,7 +273,7 @@ export function PlayerCard({
                     style.text
                   )}
                 >
-                  {name}
+                  {displayName}
                 </h2>
                 <div
                   className={cn(
