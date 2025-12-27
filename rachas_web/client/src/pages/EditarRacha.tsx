@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function EditarRacha() {
   const [, setLocation] = useLocation();
@@ -53,7 +54,9 @@ export default function EditarRacha() {
     ponto_gol: "",
     ponto_assistencia: "",
     ponto_presenca: "",
+    administradores_ids: [] as string[],
   });
+  const [jogadores, setJogadores] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -74,7 +77,12 @@ export default function EditarRacha() {
           ponto_gol: data.ponto_gol?.toString() || "1",
           ponto_assistencia: data.ponto_assistencia?.toString() || "1",
           ponto_presenca: data.ponto_presenca?.toString() || "1",
+          administradores_ids: data.administradores_ids || [],
         });
+        
+        // Carregar jogadores para seleção de admin
+        const jogadoresRes = await api.get(`/rachas/${id}/jogadores/`);
+        setJogadores(jogadoresRes.data);
       } catch (error) {
         console.error("Erro ao carregar racha:", error);
         toast.error("Erro ao carregar dados do racha.");
@@ -111,6 +119,7 @@ export default function EditarRacha() {
         ponto_gol: parseInt(formData.ponto_gol),
         ponto_assistencia: parseInt(formData.ponto_assistencia),
         ponto_presenca: parseInt(formData.ponto_presenca),
+        administradores_ids: formData.administradores_ids,
       };
 
       await api.patch(`/rachas/${id}/`, payload);
@@ -282,6 +291,41 @@ export default function EditarRacha() {
                     required
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <h3 className="text-lg font-semibold mb-4">Administradores</h3>
+               <div className="space-y-3 max-h-60 overflow-y-auto p-2 border rounded-md">
+                {jogadores.map((item) => (
+                  <div key={item.jogador.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`admin-${item.jogador.id}`} 
+                      checked={formData.administradores_ids.includes(item.jogador.id)}
+                      onCheckedChange={(checked) => {
+                        const currentIds = formData.administradores_ids;
+                        if (checked) {
+                          setFormData({
+                            ...formData,
+                            administradores_ids: [...currentIds, item.jogador.id]
+                          });
+                        } else {
+                           setFormData({
+                            ...formData,
+                            administradores_ids: currentIds.filter(id => id !== item.jogador.id)
+                          });
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor={`admin-${item.jogador.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {item.jogador.first_name} {item.jogador.last_name} ({item.jogador.username})
+                    </label>
+                  </div>
+                ))}
+                {jogadores.length === 0 && <p className="text-sm text-muted-foreground">Nenhum jogador encontrado.</p>}
               </div>
             </div>
           </form>

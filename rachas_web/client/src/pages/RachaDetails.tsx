@@ -427,7 +427,7 @@ export default function RachaDetails() {
                   key={partida.id}
                   className="hover:border-primary/50 transition-colors"
                 >
-                  <CardContent className="p-2 flex flex-row justify-between md:flex-row md:items-center gap-4">
+                  <CardContent className="p-2 flex flex-row justify-between md:flex-row md:items-center gap-2">
                     <div className="flex flex-row gap-4 items-center">
                       <div className="flex items-center gap-2 ml-4">
                         <Badge
@@ -459,7 +459,7 @@ export default function RachaDetails() {
                       {racha.is_admin && (
                         <Link href={`/partida/${partida.id}/gerenciar`}>
                           <Button variant="outline" size="sm">
-                            <FaCog className="mr-2" /> Gerenciar
+                            <FaCog className="md:mr-2" /> <span className="hidden md:inline">Gerenciar</span>
                           </Button>
                         </Link>
                       )}

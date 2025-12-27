@@ -84,8 +84,6 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         
         
-        print(request.data)
-        
         # Para PUT e PATCH
         data = request.data.copy() # Make mutable copy
         
@@ -624,14 +622,16 @@ class PartidaViewSet(viewsets.ModelViewSet):
         jogador_gol_id = request.data.get('jogador_gol_id')
         jogador_assistencia_id = request.data.get('jogador_assistencia_id')
         
-        if not jogador_gol_id:
+        if not jogador_gol_id and not jogador_assistencia_id:
             return Response(
-                {'erro': 'jogador_gol_id obrigatório'},
+                {'erro': 'Informe pelo menos o autor do gol ou da assistência'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Validar jogador gol
-        jogador_gol = get_object_or_404(User, id=jogador_gol_id)
+        # Validar jogador gol (opcional)
+        jogador_gol = None
+        if jogador_gol_id:
+            jogador_gol = get_object_or_404(User, id=jogador_gol_id)
         
         # Validar jogador assistência (opcional)
         jogador_assistencia = None

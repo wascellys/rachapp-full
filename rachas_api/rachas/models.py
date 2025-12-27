@@ -169,7 +169,7 @@ class RegistroPartida(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     partida = models.ForeignKey(Partida, on_delete=models.CASCADE, related_name='registros')
-    jogador_gol = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gols_registrados')
+    jogador_gol = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gols_registrados', blank=True, null=True)
     jogador_assistencia = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -186,7 +186,7 @@ class RegistroPartida(models.Model):
         ordering = ['-criado_em']
     
     def __str__(self):
-        return f"Gol: {self.jogador_gol.get_full_name()}"
+        return f"Gol: {self.jogador_gol.get_full_name() if self.jogador_gol else 'Anônimo'} - Assistência: {self.jogador_assistencia.get_full_name() if self.jogador_assistencia else 'Anônimo'}"
 
 
 class PremioPartida(models.Model):

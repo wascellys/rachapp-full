@@ -65,6 +65,12 @@ class RachaSerializer(serializers.ModelSerializer):
     """Serializer básico para rachas"""
     
     # administrador = UserSerializer(read_only=True)
+    administradores_ids = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=User.objects.all(), 
+        source='administrador',
+        required=False
+    )
     total_jogadores = serializers.SerializerMethodField()
     imagem_perfil = serializers.SerializerMethodField()
     is_admin = serializers.SerializerMethodField()
@@ -72,10 +78,11 @@ class RachaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Racha
         fields = [
-            'id', 'nome', 'imagem_perfil',
+            'id', 'nome', 'descricao', 'imagem_perfil',
             'data_inicio', 'data_encerramento', 'codigo_convite',
             'ponto_gol', 'ponto_assistencia', 'ponto_presenca',
-            'criado_em', 'total_jogadores', 'is_admin'
+            'criado_em', 'total_jogadores', 'is_admin',
+            'administradores_ids'
         ]
         read_only_fields = ['id', 'codigo_convite', 'criado_em']
 

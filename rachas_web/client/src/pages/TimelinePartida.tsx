@@ -33,7 +33,7 @@ interface Jogador {
 interface Registro {
   id: string;
   partida: string;
-  jogador_gol: Jogador;
+  jogador_gol: Jogador | null;
   jogador_assistencia: Jogador | null;
   criado_em: string;
 }
@@ -134,7 +134,7 @@ export default function TimelinePartida() {
 
   const abrirModalEdicao = (registro: Registro) => {
     setRegistroEditando(registro);
-    setNovoAutorGol(registro.jogador_gol.id);
+    setNovoAutorGol(registro.jogador_gol?.id || "anonimo");
     setNovoAutorAssistencia(registro.jogador_assistencia?.id || "nenhum");
     setModalEdicaoAberto(true);
   };
@@ -145,7 +145,7 @@ export default function TimelinePartida() {
     try {
       const payload: any = {
         registro_id: registroEditando.id,
-        jogador_gol_id: novoAutorGol,
+        jogador_gol_id: novoAutorGol === "anonimo" ? null : novoAutorGol,
       };
 
       if (novoAutorAssistencia === "nenhum") {
@@ -270,8 +270,9 @@ export default function TimelinePartida() {
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">⚽</span>
                           <span className="font-bold text-foreground text-lg">
-                            {evento.data.jogador_gol.first_name ||
-                              evento.data.jogador_gol.username}
+                            {evento.data.jogador_gol 
+                              ? (evento.data.jogador_gol.first_name || evento.data.jogador_gol.username)
+                              : "Anônimo / Outro"}
                           </span>
                         </div>
 
@@ -328,6 +329,7 @@ export default function TimelinePartida() {
                   <SelectValue placeholder="Selecione o jogador" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="anonimo">Anônimo / Outro</SelectItem>
                   {jogadores.map(jogador => (
                     <SelectItem key={jogador.id} value={jogador.id}>
                       {jogador.first_name || jogador.username}

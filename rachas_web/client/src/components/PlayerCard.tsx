@@ -247,7 +247,7 @@ export function PlayerCard({
                 />
               </div>
 
-              <div className="w-2/4 flex items-end justify-center">
+              <div className="w-3/4 flex items-end justify-center">
                 <Avatar className="w-45 h-45">
                   <AvatarImage
                     src={photo || undefined}

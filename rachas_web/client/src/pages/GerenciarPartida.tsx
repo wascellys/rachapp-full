@@ -155,7 +155,7 @@ export default function GerenciarPartida() {
     }
   };
 
-  const abrirModalGol = (jogador: JogadorPartida) => {
+  const abrirModalGol = (jogador: JogadorPartida | null) => {
     setJogadorGol(jogador);
     setSelectedAssistenciaId("none");
     setShowRegistrarGol(true);
@@ -167,11 +167,9 @@ export default function GerenciarPartida() {
   };
 
   const registrarGol = async () => {
-    if (!jogadorGol) return;
-
     try {
       const payload: any = {
-        jogador_gol_id: jogadorGol.jogador.id,
+        jogador_gol_id: jogadorGol ? jogadorGol.jogador.id : null,
         minuto: 0, // Opcional
       };
 
@@ -181,7 +179,8 @@ export default function GerenciarPartida() {
 
       await api.post(`/partidas/${partidaId}/registrar_gol/`, payload);
 
-      toast.success(`Gol de ${jogadorGol.jogador.first_name} registrado!`);
+      const nomeAutor = jogadorGol ? jogadorGol.jogador.first_name : "Anônimo/Outro";
+      toast.success(`Gol de ${nomeAutor} registrado!`);
       setShowRegistrarGol(false);
       carregarDados(); // Atualiza placar e estatísticas
     } catch (error: any) {
@@ -292,9 +291,14 @@ export default function GerenciarPartida() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl">Jogadores Presentes</CardTitle>
           {partida.status !== "FINALIZADA" && (
-            <Button size="sm" onClick={() => setShowAddJogador(true)}>
-              <FaUserPlus className="mr-2" /> Adicionar Jogador
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => abrirModalGol(null)} className="border-dashed">
+                <FaFutbol className="mr-2" /> Gol Anônimo / Outro
+              </Button>
+              <Button size="sm" onClick={() => setShowAddJogador(true)}>
+                <FaUserPlus className="mr-2" /> Adicionar Jogador
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent>
@@ -424,7 +428,7 @@ export default function GerenciarPartida() {
             <DialogDescription>
               Gol de{" "}
               <strong>
-                {jogadorGol?.jogador.first_name} {jogadorGol?.jogador.last_name}
+                {jogadorGol ? `${jogadorGol.jogador.first_name} ${jogadorGol.jogador.last_name}` : "Anônimo / Outro"}
               </strong>
               . Quem deu a assistência?
             </DialogDescription>
@@ -446,7 +450,7 @@ export default function GerenciarPartida() {
                   Sem assistência / Jogada individual
                 </SelectItem>
                 {jogadoresPartida
-                  .filter(jp => jp.jogador.id !== jogadorGol?.jogador.id) // Não pode dar assistência pra si mesmo
+                  .filter(jp => !jogadorGol || jp.jogador.id !== jogadorGol.jogador.id) // Não pode dar assistência pra si mesmo
                   .map(jp => (
                     <SelectItem key={jp.jogador.id} value={jp.jogador.id}>
                       {jp.jogador.first_name} {jp.jogador.last_name}
