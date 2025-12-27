@@ -87,7 +87,9 @@ export default function Perfil() {
 
   const handleCropComplete = (croppedBlob: Blob) => {
     // Create a File from the Blob
-    const file = new File([croppedBlob], "profile-pic.jpg", { type: "image/jpeg" });
+    const timestamp = new Date().getTime();
+    const username = user?.username || "user";
+    const file = new File([croppedBlob], `profile-pic-${username}-${timestamp}.jpg`, { type: "image/jpeg" });
     
     setFormData({ ...formData, imagem_perfil: file });
 
