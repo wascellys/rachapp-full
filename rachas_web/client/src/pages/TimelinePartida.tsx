@@ -76,12 +76,21 @@ type TimelineEvent =
   | { type: 'GOL', data: Registro, timestamp: number }
   | { type: 'PREMIO', data: PremioPartida, timestamp: number };
 
+// ... other interfaces ...
+interface RachaDetails {
+  id: string;
+  nome: string;
+  ponto_gol: number;
+  ponto_assistencia: number;
+}
+
 export default function TimelinePartida() {
   const [, params] = useRoute("/partida/:id/timeline");
   const [, setLocation] = useLocation();
   const partidaId = params?.id;
 
   const [partida, setPartida] = useState<Partida | null>(null);
+  const [rachaDetails, setRachaDetails] = useState<RachaDetails | null>(null);
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,10 +115,19 @@ export default function TimelinePartida() {
       const partidaRes = await api.get(`/partidas/${partidaId}/`);
       setPartida(partidaRes.data);
 
+      if (partidaRes.data.racha) {
+        const rachaRes = await api.get(`/rachas/${partidaRes.data.racha}/`);
+        setRachaDetails(rachaRes.data);
+      }
+
       // Carregar jogadores da partida para o modal de edição
       const jogadoresRes = await api.get(`/partidas/${partidaId}/jogadores/`);
       // Mapear a resposta para extrair os dados do usuário
-      const listaJogadores = jogadoresRes.data.map((item: any) => item.jogador);
+      const listaJogadores = jogadoresRes.data
+        .map((item: any) => item.jogador)
+        .sort((a: any, b: any) =>
+          (a.first_name || "").localeCompare(b.first_name || "")
+        );
       setJogadores(listaJogadores);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -350,7 +368,11 @@ export default function TimelinePartida() {
                         gols[id].count++;
                       }
                     });
-                    const topGols = Object.values(gols).sort((a, b) => b.count - a.count);
+                    const topGols = Object.values(gols).sort((a, b) => {
+                      const diff = b.count - a.count;
+                      if (diff !== 0) return diff;
+                      return (a.jogador.first_name || "").localeCompare(b.jogador.first_name || "");
+                    });
 
                     if (topGols.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem gols registrados</p>;
                     
@@ -396,7 +418,11 @@ export default function TimelinePartida() {
                         assistencias[id].count++;
                       }
                     });
-                    const topAssistencias = Object.values(assistencias).sort((a, b) => b.count - a.count);
+                    const topAssistencias = Object.values(assistencias).sort((a, b) => {
+                      const diff = b.count - a.count;
+                      if (diff !== 0) return diff;
+                      return (a.jogador.first_name || "").localeCompare(b.jogador.first_name || "");
+                    });
 
                     if (topAssistencias.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem assistências</p>;
 
@@ -425,17 +451,89 @@ export default function TimelinePartida() {
                 </CardContent>
               </Card>
 
-              {/* Prêmios */}
+              {/* Pontuação (Prêmios + Gols + Assistências) */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Trophy className="text-yellow-600" /> Líderes em Pontuação
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const pontos: Record<string, { jogador: Jogador, count: number }> = {};
+                    
+                    // Pontos de Gols e Assistências
+                    partida.registros.forEach(r => {
+                      // Gols
+                      if (r.jogador_gol) {
+                        const id = r.jogador_gol.id;
+                        if (!pontos[id]) pontos[id] = { jogador: r.jogador_gol, count: 0 };
+                        pontos[id].count += (rachaDetails?.ponto_gol || 0);
+                      }
+                      
+                      // Assistências
+                      if (r.jogador_assistencia) {
+                        const id = r.jogador_assistencia.id;
+                        if (!pontos[id]) pontos[id] = { jogador: r.jogador_assistencia, count: 0 };
+                        pontos[id].count += (rachaDetails?.ponto_assistencia || 0);
+                      }
+                    });
+
+                    // Pontos de Prêmios
+                    partida.premios_partida.forEach(p => {
+                      const id = p.jogador.id;
+                      if (!pontos[id]) pontos[id] = { jogador: p.jogador, count: 0 };
+                      pontos[id].count += p.premio.valor_pontos;
+                    });
+                    
+                    const topPontos = Object.values(pontos).sort((a, b) => {
+                      const diff = b.count - a.count;
+                      if (diff !== 0) return diff;
+                      return (a.jogador.first_name || "").localeCompare(b.jogador.first_name || "");
+                    });
+
+                    if (topPontos.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem pontuação registrada</p>;
+
+                    return (
+                      <div className="space-y-3">
+                        {topPontos.slice(0, 3).map((item, idx) => (
+                          <div key={item.jogador.id} className="flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-6 text-center font-bold flex-shrink-0 ${idx === 0 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                                {idx + 1}º
+                              </div>
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={item.jogador.imagem_perfil || undefined} />
+                                <AvatarFallback>{item.jogador.first_name[0]}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium text-sm truncate">
+                                {item.jogador.first_name} {item.jogador.last_name}
+                              </span>
+                            </div>
+                            <div className="font-bold text-yellow-600 flex-shrink-0 ml-2">{item.count}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Lista De Prêmios Detalhada */}
               <Card className="md:col-span-2">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Trophy className="text-yellow-500" /> Prêmios da Partida
+                    <Trophy className="text-yellow-500" /> Prêmios Distribuídos
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {partida.premios_partida && partida.premios_partida.length > 0 ? (
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {partida.premios_partida.map(premio => (
+                      {partida.premios_partida
+                        .sort((a, b) => (
+                           a.jogador.first_name || ""
+                        ).localeCompare(b.jogador.first_name || ""))
+                        .map(premio => (
                         <div key={premio.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border min-w-0">
                           <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 flex-shrink-0">
                              <Trophy className="h-5 w-5" />
@@ -485,7 +583,7 @@ export default function TimelinePartida() {
                   <SelectItem value="anonimo">Anônimo / Outro</SelectItem>
                   {jogadores.map(jogador => (
                     <SelectItem key={jogador.id} value={jogador.id}>
-                      {jogador.first_name || jogador.username}
+                      {jogador.first_name ? `${jogador.first_name} ${jogador.last_name}` : jogador.username}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -507,7 +605,7 @@ export default function TimelinePartida() {
                     .filter(j => j.id !== novoAutorGol)
                     .map(jogador => (
                       <SelectItem key={jogador.id} value={jogador.id}>
-                        {jogador.first_name || jogador.username}
+                        {jogador.first_name ? `${jogador.first_name} ${jogador.last_name}` : jogador.username}
                       </SelectItem>
                     ))}
                 </SelectContent>

@@ -105,7 +105,11 @@ export default function GerenciarPartida() {
       const jogadoresPartidaRes = await api.get(
         `/partidas/${partidaId}/jogadores/`
       );
-      setJogadoresPartida(jogadoresPartidaRes.data);
+      setJogadoresPartida(
+        jogadoresPartidaRes.data.sort((a: any, b: any) =>
+          (a.jogador.first_name || "").localeCompare(b.jogador.first_name || "")
+        )
+      );
 
       // Carregar todos os jogadores do racha para adicionar
       const rachaId = partidaRes.data.racha;
@@ -122,9 +126,11 @@ export default function GerenciarPartida() {
         (jr: any) => jr.jogador
       );
 
-      const disponiveis = todosJogadores.filter(
-        (j: any) => !idsNaPartida.has(String(j.id))
-      );
+      const disponiveis = todosJogadores
+        .filter((j: any) => !idsNaPartida.has(String(j.id)))
+        .sort((a: any, b: any) =>
+          (a.first_name || "").localeCompare(b.first_name || "")
+        );
 
       console.log("Jogadores disponíveis:", disponiveis); // Debug
       setJogadoresDisponiveis(disponiveis);
