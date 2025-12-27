@@ -20,6 +20,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FaFutbol, FaHandshake } from "react-icons/fa";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface JogadorStats {
+  id: string;
+  jogador: Jogador;
+  gols: number;
+  assistencias: number;
+}
 
 interface Jogador {
   id: string;
@@ -210,7 +220,7 @@ export default function TimelinePartida() {
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <div>
-          <h1 className="text-lg font-bold text-foreground">Linha do Tempo</h1>
+          <h1 className="text-lg font-bold text-foreground">Detalhes da Partida</h1>
           <p className="text-xs text-muted-foreground">
             {new Date(partida.data_inicio).toLocaleDateString("pt-BR")} •{" "}
             {formatarHora(partida.data_inicio)}
@@ -218,100 +228,243 @@ export default function TimelinePartida() {
         </div>
       </header>
 
-      <main className="container max-w-2xl mx-auto p-4 space-y-6">
-        {eventos.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum evento registrado nesta partida ainda.</p>
-          </div>
-        ) : (
-          <div className="relative border-l-2 border-border space-y-8 pl-8 py-4">
-            {eventos.map((evento) => (
-              <div key={evento.type === 'GOL' ? evento.data.id : evento.data.id} className="relative">
-                {/* Marcador da linha do tempo */}
-                <div className={`absolute -left-[41px] top-15 h-5 w-5 rounded-full border-4 border-background flex items-center justify-center ${
-                  evento.type === 'GOL' ? 'bg-primary' : 'bg-yellow-500'
-                }`}></div>
+      <main className="container max-w-2xl mx-auto p-4">
+        <Tabs defaultValue="timeline" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
+            <TabsTrigger value="destaques">Destaques</TabsTrigger>
+          </TabsList>
 
-                <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2 xl:mb-4 justify-content-center align-items-center">
-                      <div className={`flex items-center gap-2 text-sm font-medium ${
-                        evento.type === 'GOL' ? 'text-primary' : 'text-yellow-600'
-                      }`}>
-                        {evento.type === 'GOL' ? <Clock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
-                        {formatarHora(evento.data.criado_em)}
-                      </div>
-                      
-                      {evento.type === 'GOL' && partida.racha_is_admin && (
-                        <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          onClick={() => abrirModalEdicao(evento.data)}
-                        >
-                          <Edit2 className="h-2 w-2" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRemoverRegistro(evento.data.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      )}
-                    </div>
+          <TabsContent value="timeline" className="space-y-6">
+            {eventos.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhum evento registrado nesta partida ainda.</p>
+              </div>
+            ) : (
+              <div className="relative border-l-2 border-border space-y-8 pl-8 py-4">
+                {eventos.map((evento) => (
+                  <div key={evento.type === 'GOL' ? evento.data.id : evento.data.id} className="relative">
+                    {/* Marcador da linha do tempo */}
+                    <div className={`absolute -left-[41px] top-15 h-5 w-5 rounded-full border-4 border-background flex items-center justify-center ${
+                      evento.type === 'GOL' ? 'bg-primary' : 'bg-yellow-500'
+                    }`}></div>
 
-                    {evento.type === 'GOL' ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl">⚽</span>
-                          <span className="font-bold text-foreground text-lg">
-                            {evento.data.jogador_gol 
-                              ? (evento.data.jogador_gol.first_name || evento.data.jogador_gol.username)
-                              : "Anônimo / Outro"}
-                          </span>
+                    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2 xl:mb-4 justify-content-center align-items-center">
+                          <div className={`flex items-center gap-2 text-sm font-medium ${
+                            evento.type === 'GOL' ? 'text-primary' : 'text-yellow-600'
+                          }`}>
+                            {evento.type === 'GOL' ? <Clock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
+                            {formatarHora(evento.data.criado_em)}
+                          </div>
+                          
+                          {evento.type === 'GOL' && partida.racha_is_admin && (
+                            <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              onClick={() => abrirModalEdicao(evento.data)}
+                            >
+                              <Edit2 className="h-2 w-2" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleRemoverRegistro(evento.data.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          )}
                         </div>
 
-                        {evento.data.jogador_assistencia && (
-                          <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9">
-                            <span>👟 Assistência:</span>
-                            <span className="font-medium text-foreground">
-                              {evento.data.jogador_assistencia.first_name ||
-                                evento.data.jogador_assistencia.username}
-                            </span>
+                        {evento.type === 'GOL' ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-2xl flex-shrink-0">⚽</span>
+                              <span className="font-bold text-foreground text-lg truncate">
+                                {evento.data.jogador_gol 
+                                  ? (evento.data.jogador_gol.first_name || evento.data.jogador_gol.username)
+                                  : "Anônimo / Outro"}
+                              </span>
+                            </div>
+
+                            {evento.data.jogador_assistencia && (
+                              <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9 min-w-0">
+                                <span className="flex-shrink-0">👟 Assistência:</span>
+                                <span className="font-medium text-foreground truncate">
+                                  {evento.data.jogador_assistencia.first_name ||
+                                    evento.data.jogador_assistencia.username}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                             <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-2xl flex-shrink-0">🏆</span>
+                              <span className="font-bold text-foreground text-lg truncate">
+                                {evento.data.premio.nome}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9 min-w-0">
+                                <span className="flex-shrink-0">Para:</span>
+                                <span className="font-medium text-foreground truncate">
+                                  {evento.data.jogador.first_name ||
+                                    evento.data.jogador.username}
+                                </span>
+                                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                  +{evento.data.premio.valor_pontos} pts
+                                </span>
+                              </div>
                           </div>
                         )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="destaques" className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Artilheiros */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FaFutbol className="text-primary" /> Artilheiros
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const gols: Record<string, { jogador: Jogador, count: number }> = {};
+                    partida.registros.forEach(r => {
+                      if (r.jogador_gol) {
+                        const id = r.jogador_gol.id;
+                        if (!gols[id]) gols[id] = { jogador: r.jogador_gol, count: 0 };
+                        gols[id].count++;
+                      }
+                    });
+                    const topGols = Object.values(gols).sort((a, b) => b.count - a.count);
+
+                    if (topGols.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem gols registrados</p>;
+                    
+                    return (
+                      <div className="space-y-3">
+                        {topGols.slice(0, 3).map((item, idx) => (
+                          <div key={item.jogador.id} className="flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-6 text-center font-bold flex-shrink-0 ${idx === 0 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                                {idx + 1}º
+                              </div>
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={item.jogador.imagem_perfil || undefined} />
+                                <AvatarFallback>{item.jogador.first_name[0]}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium text-sm truncate">
+                                {item.jogador.first_name} {item.jogador.last_name}
+                              </span>
+                            </div>
+                            <div className="font-bold text-primary flex-shrink-0 ml-2">{item.count}</div>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <div className="space-y-1">
-                         <div className="flex items-center gap-2">
-                          <span className="text-2xl">🏆</span>
-                          <span className="font-bold text-foreground text-lg">
-                            {evento.data.premio.nome}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9">
-                            <span>Para:</span>
-                            <span className="font-medium text-foreground">
-                              {evento.data.jogador.first_name ||
-                                evento.data.jogador.username}
-                            </span>
-                             <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full">
-                              +{evento.data.premio.valor_pontos} pts
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Assistências */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FaHandshake className="text-blue-500" /> Líderes em Assistências
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const assistencias: Record<string, { jogador: Jogador, count: number }> = {};
+                    partida.registros.forEach(r => {
+                      if (r.jogador_assistencia) {
+                        const id = r.jogador_assistencia.id;
+                        if (!assistencias[id]) assistencias[id] = { jogador: r.jogador_assistencia, count: 0 };
+                        assistencias[id].count++;
+                      }
+                    });
+                    const topAssistencias = Object.values(assistencias).sort((a, b) => b.count - a.count);
+
+                    if (topAssistencias.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem assistências</p>;
+
+                    return (
+                      <div className="space-y-3">
+                        {topAssistencias.slice(0, 3).map((item, idx) => (
+                          <div key={item.jogador.id} className="flex items-center justify-between min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-6 text-center font-bold flex-shrink-0 ${idx === 0 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
+                                {idx + 1}º
+                              </div>
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={item.jogador.imagem_perfil || undefined} />
+                                <AvatarFallback>{item.jogador.first_name[0]}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium text-sm truncate">
+                                {item.jogador.first_name} {item.jogador.last_name}
+                              </span>
+                            </div>
+                            <div className="font-bold text-blue-500 flex-shrink-0 ml-2">{item.count}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Prêmios */}
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Trophy className="text-yellow-500" /> Prêmios da Partida
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {partida.premios_partida && partida.premios_partida.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {partida.premios_partida.map(premio => (
+                        <div key={premio.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border min-w-0">
+                          <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 flex-shrink-0">
+                             <Trophy className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-sm truncate">{premio.premio.nome}</p>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                              <span className="flex-shrink-0">Para:</span>
+                              <span className="font-medium text-foreground truncate">
+                                {premio.jogador.first_name} {premio.jogador.last_name}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="ml-auto flex-shrink-0">
+                            <span className="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                              +{premio.premio.valor_pontos} pts
                             </span>
                           </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Nenhum prêmio distribuído nesta partida</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Modal de Edição */}

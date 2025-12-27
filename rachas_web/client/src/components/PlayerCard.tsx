@@ -218,7 +218,7 @@ export function PlayerCard({
         >
           {/* FUNDO COM IMAGEM (TOP) */}
           <div
-            className="absolute top-0 left-0 w-full h-[35%]"
+            className="absolute top-0 left-0 w-full h-[45%]"
             style={{
               backgroundImage: photo ? `url(${photo})` : undefined,
               backgroundSize: "cover",
@@ -233,10 +233,10 @@ export function PlayerCard({
           <div className="relative z-10">
             <div className="flex">
               <div className="flex flex-col w-1/3 pt-4">
-                <span className={cn("text-4xl font-bold", style.text)}>
+                <span className={cn("text-4xl font-bold text-white")}>
                   {overall}
                 </span>
-                <span className={cn("text-lg font-semibold", style.text)}>
+                <span className={cn("text-lg font-semibold text-white")}>
                   PTS
                 </span>
                 <div
@@ -248,7 +248,7 @@ export function PlayerCard({
               </div>
 
               <div className="w-3/4 flex items-end justify-center">
-                <Avatar className="w-45 h-45 rounded-full">
+                <Avatar className="w-40 h-40 rounded-full">
                   <AvatarImage
                     src={photo || undefined}
                     className="object-cover object-top drop-shadow-lg"
@@ -262,7 +262,7 @@ export function PlayerCard({
           </div>
 
           {/* GLASS (NOME + STATS) */}
-          <div className="relative z-10 mt-0">
+          <div className="relative z-10 mt-4">
             <div className="absolute bg-white/10 backdrop-blur-md rounded-lg border border-white/20" />
             <div className="relative p-3">
               {/* NOME */}

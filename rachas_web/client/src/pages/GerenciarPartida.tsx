@@ -288,14 +288,14 @@ export default function GerenciarPartida() {
 
       {/* Lista de Jogadores */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <CardTitle className="text-xl">Jogadores Presentes</CardTitle>
           {partida.status !== "FINALIZADA" && (
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => abrirModalGol(null)} className="border-dashed">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Button size="sm" variant="outline" onClick={() => abrirModalGol(null)} className="border-dashed flex-1 sm:flex-none">
                 <FaFutbol className="mr-2" /> Gol Anônimo / Outro
               </Button>
-              <Button size="sm" onClick={() => setShowAddJogador(true)}>
+              <Button size="sm" onClick={() => setShowAddJogador(true)} className="flex-1 sm:flex-none">
                 <FaUserPlus className="mr-2" /> Adicionar Jogador
               </Button>
             </div>
@@ -313,15 +313,15 @@ export default function GerenciarPartida() {
                   key={jp.id}
                   className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/30 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Avatar>
                       <AvatarImage src={jp.jogador.imagem_perfil || undefined} />
                       <AvatarFallback>
                         {jp.jogador.first_name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">
                         {jp.jogador.first_name} {jp.jogador.last_name}
                       </p>
                       <p className="text-xs text-muted-foreground">

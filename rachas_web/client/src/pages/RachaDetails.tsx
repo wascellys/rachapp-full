@@ -427,8 +427,8 @@ export default function RachaDetails() {
                   key={partida.id}
                   className="hover:border-primary/50 transition-colors"
                 >
-                  <CardContent className="p-2 flex flex-row justify-between md:flex-row md:items-center gap-2">
-                    <div className="flex flex-row gap-4 items-center">
+                  <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex flex-row gap-4 items-center w-full sm:w-auto">
                       <div className="flex items-center gap-2 ml-4">
                         <Badge
                           variant={
@@ -440,13 +440,13 @@ export default function RachaDetails() {
                           {partida.status}
                         </Badge>
                       </div>
-                      <p className="font-medium">{partida.local}</p>
+                      {/* <p className="font-medium">{partida.local}</p> */}
                       <div className="text-sm font-bold">
                         Partida dia{" "}
                         {new Date(partida.criado_em).toLocaleDateString()}{" "}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto justify-end">
                       <Link href={`/partida/${partida.id}/timeline`}>
                         <Button
                           variant="ghost"
