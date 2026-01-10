@@ -61,6 +61,7 @@ interface JogadorPartida {
 }
 
 import { SelectPremioModal } from "@/components/SelectPremioModal";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 export default function GerenciarPartida() {
   const [, setLocation] = useLocation();
@@ -80,9 +81,7 @@ export default function GerenciarPartida() {
   const [showAddJogador, setShowAddJogador] = useState(false);
   const [showRegistrarGol, setShowRegistrarGol] = useState(false);
   const [showSelectPremio, setShowSelectPremio] = useState(false);
-  const [selectedJogadorId, setSelectedJogadorId] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedJogadoresIds, setSelectedJogadoresIds] = useState<string[]>([]);
   const [selectedAssistenciaId, setSelectedAssistenciaId] =
     useState<string>("none");
   const [jogadorGol, setJogadorGol] = useState<JogadorPartida | null>(null);
@@ -143,21 +142,21 @@ export default function GerenciarPartida() {
   };
 
   const adicionarJogador = async () => {
-    if (!selectedJogadorId) return;
+    if (selectedJogadoresIds.length === 0) return;
 
     try {
       await api.post(`/partidas/${partidaId}/adicionar_jogador/`, {
-        jogador_id: selectedJogadorId,
-        time: "A", // Padrão, depois pode mudar
+        jogadores_ids: selectedJogadoresIds,
+        time: "A", // Padrão
         presente: true,
       });
 
-      toast.success("Jogador adicionado!");
+      toast.success("Jogadores adicionados!");
       setShowAddJogador(false);
-      setSelectedJogadorId("");
+      setSelectedJogadoresIds([]);
       carregarDados(); // Recarrega tudo
     } catch (error: any) {
-      toast.error("Erro ao adicionar jogador.");
+      toast.error("Erro ao adicionar jogadores.");
     }
   };
 
@@ -216,22 +215,22 @@ export default function GerenciarPartida() {
     return (
       <div className="max-w-4xl mx-auto py-0 space-y-6">
         <div className="flex justify-between items-center">
-           <Skeleton className="h-10 w-32" />
-           <div className="flex gap-2">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-10" />
-           </div>
+          <Skeleton className="h-10 w-32" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-10" />
+          </div>
         </div>
         <div className="rounded-xl border shadow-sm">
-           <div className="p-6 flex justify-between">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-9 w-32" />
-           </div>
-           <div className="p-6 pt-0 space-y-4">
-              {[1, 2, 3].map((i) => (
-                 <Skeleton key={i} className="h-16 w-full" />
-              ))}
-           </div>
+          <div className="p-6 flex justify-between">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+          <div className="p-6 pt-0 space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -367,7 +366,7 @@ export default function GerenciarPartida() {
                           onClick={() => abrirModalPremio(jp)}
                           title="Dar prêmio"
                         >
-                           <FaTrophy />
+                          <FaTrophy />
                         </Button>
                         <Button
                           size="sm"
@@ -375,7 +374,7 @@ export default function GerenciarPartida() {
                           onClick={() => abrirModalGol(jp)}
                           title="Registrar gol"
                         >
-                          <FaFutbol className="mr" /> 
+                          <FaFutbol className="mr" />
                         </Button>
                       </div>
                     )}
@@ -389,37 +388,31 @@ export default function GerenciarPartida() {
 
       {/* Modal Adicionar Jogador */}
       <Dialog open={showAddJogador} onOpenChange={setShowAddJogador}>
-        <DialogContent>
+        <DialogContent className="overflow-visible">
           <DialogHeader>
-            <DialogTitle>Adicionar Jogador à Partida</DialogTitle>
+            <DialogTitle>Adicionar Jogadores à Partida</DialogTitle>
             <DialogDescription>
-              Selecione um jogador do racha para participar.
+              Selecione os jogadores do racha para participar.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4">
-            <Select
-              value={selectedJogadorId || ""}
-              onValueChange={setSelectedJogadorId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o jogador..." />
-              </SelectTrigger>
-              <SelectContent>
-                {jogadoresDisponiveis.map(j => (
-                  <SelectItem key={j.id} value={j.id}>
-                    {j.first_name} {j.last_name} ({j.username})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MultiSelect
+              options={jogadoresDisponiveis.map(j => ({
+                value: j.id,
+                label: `${j.first_name} ${j.last_name}`.trim() || j.username,
+              }))}
+              selected={selectedJogadoresIds}
+              onChange={setSelectedJogadoresIds}
+              placeholder="Selecione os jogadores..."
+            />
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddJogador(false)}>
               Cancelar
             </Button>
-            <Button onClick={adicionarJogador} disabled={!selectedJogadorId}>
+            <Button onClick={adicionarJogador} disabled={selectedJogadoresIds.length === 0}>
               Adicionar
             </Button>
           </DialogFooter>

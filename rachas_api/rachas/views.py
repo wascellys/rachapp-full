@@ -566,12 +566,45 @@ class PartidaViewSet(viewsets.ModelViewSet):
     def adicionar_jogador(self, request, pk=None):
         """Adiciona jogador à partida"""
         partida = self.get_object()
+        if 'jogadores_ids' in request.data:
+            jogadores_ids = request.data.get('jogadores_ids', [])
+            if not isinstance(jogadores_ids, list):
+                 return Response(
+                    {'erro': 'jogadores_ids deve ser uma lista'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            jogadores_adicionados = []
+            erros = []
+            
+            for j_id in jogadores_ids:
+                try:
+                    jogador = get_object_or_404(User, id=j_id)
+                    # Verifica se jogador pertence ao racha
+                    if not JogadoresRacha.objects.filter(racha=partida.racha, jogador=jogador, ativo=True).exists():
+                         erros.append(f"Jogador {jogador.get_full_name()} não pertence a este racha")
+                         continue
+
+                    jogador_partida, created = JogadorPartida.objects.update_or_create(
+                        partida=partida,
+                        jogador=jogador,
+                        defaults={'presente': True}
+                    )
+                    jogadores_adicionados.append(JogadorPartidaSerializer(jogador_partida).data)
+                except Exception as e:
+                    erros.append(str(e))
+            
+            return Response({
+                'jogadores': jogadores_adicionados,
+                'erros': erros
+            })
+
         jogador_id = request.data.get('jogador_id')
         time = request.data.get('time', 'A')
         
         if not jogador_id:
             return Response(
-                {'erro': 'jogador_id obrigatório'},
+                {'erro': 'jogador_id ou jogadores_ids obrigatório'},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
@@ -816,10 +849,14 @@ class SolicitacaoRachaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def get_queryset(self):
-        # Filtrar solicitações dos rachas que o usuário administra
-        return SolicitacaoRacha.objects.filter(
-            racha__administrador=self.request.user
-        )
+        tipo = self.request.query_params.get('tipo', 'recebidas')
+        
+        if tipo == 'enviadas':
+            # Solicitações que o usuário fez em outros rachas
+            return SolicitacaoRacha.objects.filter(jogador=self.request.user)
+        
+        # Padrão: Solicitam que o usuário administra (recebidas)
+        return SolicitacaoRacha.objects.filter(racha__administrador=self.request.user)
     
     @action(detail=True, methods=['post'])
     def aprovar(self, request, pk=None):

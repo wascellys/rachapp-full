@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,23 @@ export default function EntrarRacha() {
   const [, setLocation] = useLocation();
   const [loading, setLoading] = useState(false);
   const [codigo, setCodigo] = useState("");
+  const [solicitacoes, setSolicitacoes] = useState<any[]>([]);
+
+  // Carregar lista de solicitações
+  const carregarSolicitacoes = async () => {
+    try {
+      const res = await api.get("/solicitacoes/?tipo=enviadas");
+      // Handle potential pagination
+      const data = res.data.results ? res.data.results : res.data;
+      setSolicitacoes(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Erro ao carregar solicitações", e);
+    }
+  };
+
+  useEffect(() => {
+    carregarSolicitacoes();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,10 +44,6 @@ export default function EntrarRacha() {
     setLoading(true);
 
     try {
-      // Primeiro buscamos o racha pelo código para confirmar (opcional, mas boa UX)
-      // Como a API de solicitação já recebe o código, podemos tentar direto
-
-      // Enviar solicitação de entrada
       await api.post("/solicitacoes/", {
         codigo_convite: codigo.trim(),
       });
@@ -38,15 +51,19 @@ export default function EntrarRacha() {
       toast.success(
         "Solicitação enviada com sucesso! Aguarde a aprovação do administrador."
       );
-      setLocation("/solicitacoes");
+      setCodigo("");
+      carregarSolicitacoes();
     } catch (error: any) {
       console.error("Erro ao entrar no racha:", error);
 
-      // Tratamento de erros específicos
-      if (error.response?.status === 404) {
+      if (error.response?.status === 400 && error.response?.data?.erro === 'Você já tem uma solicitação pendente para este racha') {
+        toast.warning("Você já solicitou entrada neste Racha. Aguarde a aprovação do administrador.");
+      } else if (error.response?.status === 404) {
         toast.error("Racha não encontrado com este código.");
       } else if (error.response?.data?.detail) {
         toast.error(error.response.data.detail);
+      } else if (error.response?.data?.erro) {
+        toast.error(error.response.data.erro);
       } else {
         toast.error("Erro ao enviar solicitação. Tente novamente.");
       }
@@ -55,8 +72,17 @@ export default function EntrarRacha() {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PENDENTE': return <span className="text-yellow-600 bg-yellow-100 px-2 py-1 rounded text-xs font-bold">Pendente</span>;
+      case 'ACEITO': return <span className="text-green-600 bg-green-100 px-2 py-1 rounded text-xs font-bold">Aceito</span>;
+      case 'NEGADO': return <span className="text-red-600 bg-red-100 px-2 py-1 rounded text-xs font-bold">Negado</span>;
+      default: return status;
+    }
+  };
+
   return (
-    <div className="max-w-md mx-auto py-0">
+    <div className="max-w-md mx-auto py-0 space-y-8">
       <div className="mb-6">
         <Link href="/">
           <Button variant="ghost" className="pl-0 hover:pl-2 transition-all">
@@ -119,6 +145,30 @@ export default function EntrarRacha() {
           </p>
         </CardFooter>
       </Card>
+
+      {/* Tabela de Solicitações */}
+      {solicitacoes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Minhas Solicitações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {solicitacoes.map((s: any) => (
+                <div key={s.id} className="flex justify-between items-center p-3 border rounded bg-muted/20">
+                  <div>
+                    <p className="font-medium">Racha: {s.racha_details?.nome || s.racha_codigo || s.racha}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(s.criado_em).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    {getStatusBadge(s.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
