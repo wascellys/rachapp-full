@@ -20,13 +20,17 @@ import GerenciarPartida from "./pages/GerenciarPartida";
 import TimelinePartida from "./pages/TimelinePartida";
 import Dashboard from "./pages/Dashboard";
 import RankingGlobal from "./pages/RankingGlobal";
+import EsqueciSenha from "./pages/EsqueciSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
+      <Route path="/esqueci-senha" component={EsqueciSenha} />
+      <Route path="/redefinir-senha/:uid/:token" component={RedefinirSenha} />
+
       {/* Rotas Protegidas */}
       <Route path="/">
         <Layout>
@@ -51,7 +55,7 @@ function Router() {
           <EntrarRacha />
         </Layout>
       </Route>
-      
+
       <Route path="/racha/:id">
         <Layout>
           <RachaDetails />

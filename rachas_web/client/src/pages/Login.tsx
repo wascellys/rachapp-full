@@ -49,9 +49,9 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Usuário</Label>
-                <Input 
-                  id="username" 
-                  placeholder="Seu nome de usuário" 
+                <Input
+                  id="username"
+                  placeholder="Seu nome de usuário"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -60,18 +60,18 @@ export default function Login() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <a href="#" className="text-xs text-primary hover:underline">Esqueceu a senha?</a>
+                  <Link href="/esqueci-senha" className="text-xs text-primary hover:underline">Esqueceu a senha?</Link>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••••" 
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-              
+
               {error && <p className="text-sm text-destructive">{error}</p>}
 
               <Button type="submit" className="w-full font-semibold" disabled={loading}>

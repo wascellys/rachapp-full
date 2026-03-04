@@ -75,7 +75,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -171,6 +171,8 @@ AUTH_USER_MODEL = 'rachas.User'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        # Removed SessionAuthentication to prevent CSRF requirements for the API
     ),
     # 'DEFAULT_PERMISSION_CLASSES': [
     #     'rest_framework.permissions.IsAuthenticated',
@@ -276,8 +278,20 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
-
+REST_AUTH = {
+    'SESSION_LOGIN': False,
+    'USE_JWT': True,
+}
 
 BASE_URL_SYSTEM = os.environ.get('BASE_URL_SYSTEM', 'http://127.0.0.1:8000')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 # BASE_URL_IMAGES = MEDIA_URL if 'AWS_ACCESS_KEY_ID' in os.environ else f'{BASE_URL_SYSTEM}{MEDIA_URL}'
+
+# Email Configuration
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='[EMAIL_ADDRESS]')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='racha123')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=f"RachApp <{config('EMAIL_HOST_USER', default='suporte@rachapp.com.br')}>")

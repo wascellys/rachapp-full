@@ -132,6 +132,14 @@ export const auth = {
     localStorage.removeItem("refresh_token");
     window.location.href = "/login";
   },
+  passwordReset: async (email: string) => {
+    const response = await axios.post(`${AUTH_URL}/password/reset/`, { email });
+    return response.data;
+  },
+  passwordResetConfirm: async (data: any) => {
+    const response = await axios.post(`${AUTH_URL}/password/reset/confirm/`, data);
+    return response.data;
+  },
 };
 
 export default api;

@@ -23,8 +23,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('rachas.urls')),
+    path('api/auth/password/reset/confirm/<str:uidb64>/<str:token>/', TokenObtainPairView.as_view(), name='password_reset_confirm'),
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/', include('dj_rest_auth.urls')),
     path('api-auth/', include('rest_framework.urls')),
 ]
 
