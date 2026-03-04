@@ -278,6 +278,7 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '' # Remove o prefixo [example.com] automático do allauth
 REST_AUTH = {
     'SESSION_LOGIN': False,
     'USE_JWT': True,
