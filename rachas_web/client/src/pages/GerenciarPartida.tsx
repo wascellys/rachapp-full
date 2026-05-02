@@ -293,7 +293,7 @@ export default function GerenciarPartida() {
 
       {/* Lista de Jogadores */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
           <CardTitle className="text-xl">Jogadores Presentes</CardTitle>
           {partida.status !== "FINALIZADA" && (
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">

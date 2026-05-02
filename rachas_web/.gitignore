@@ -104,3 +104,29 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# ────────────────────────────────────────
+# Capacitor / Android
+# ────────────────────────────────────────
+
+# Build outputs do Android (gerados automaticamente)
+android/app/build/
+android/build/
+android/.gradle/
+android/app/.cxx/
+
+# Cache e arquivos locais do Android Studio
+android/.idea/
+android/local.properties       # contém o caminho local do SDK — não compartilhar
+android/captures/
+android/**/*.iml
+
+# ⚠️  NUNCA commite sua keystore — ela assina seu app e é irrecuperável se vazar
+*.keystore
+*.jks
+
+# .env de produção (contém URLs sensíveis, use variáveis de ambiente no CI)
+.env.production
+
+# Builds gerados pelo Capacitor
+dist/public/

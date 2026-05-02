@@ -135,7 +135,7 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 w-full">
           {rachas.map(racha => (
             <Link key={racha.id} href={`/racha/${racha.id}`}>
               <Card className="hover:border-primary/50 transition-all cursor-pointer group h-full flex flex-col">
@@ -159,8 +159,9 @@ export default function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1">
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div className="flex flex-col items-center p-3 bg-muted/30 rounded-lg">
+                  {/* Em telas maiores, stats ficam em linha */}
+                  <div className="flex flex-row gap-3 mt-2">
+                    <div className="flex flex-1 flex-col items-center p-3 bg-muted/30 rounded-lg">
                       <FaUsers className="text-primary mb-1" />
                       <span className="text-2xl font-bold">
                         {racha.total_jogadores}
@@ -169,7 +170,7 @@ export default function Home() {
                         Jogadores
                       </span>
                     </div>
-                    <div className="flex flex-col items-center p-3 bg-muted/30 rounded-lg">
+                    <div className="flex flex-1 flex-col items-center p-3 bg-muted/30 rounded-lg">
                       <FaTrophy className="text-yellow-500 mb-1" />
                       <span className="text-2xl font-bold">-</span>
                       <span className="text-xs text-muted-foreground">
