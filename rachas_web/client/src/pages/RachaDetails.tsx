@@ -25,6 +25,7 @@ import { Link } from "wouter";
 import { PremioModal } from "@/components/PremioModal";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cacheGet, cacheSet, invalidateRachaCache } from "@/lib/useRachaCache";
 
 interface RachaDetails {
   id: string;
@@ -132,6 +133,7 @@ export default function RachaDetails() {
       }
       setPremioModalOpen(false);
       setEditingPremio(null);
+      invalidateRachaCache(id!);
       fetchPremios();
     } catch (error) {
       console.error("Erro ao salvar prêmio:", error);
@@ -152,6 +154,7 @@ export default function RachaDetails() {
     try {
       await api.delete(`/premios/${premio.id}/`);
       toast.success("Prêmio excluído com sucesso!");
+      invalidateRachaCache(id!);
       fetchPremios();
     } catch (error) {
       console.error("Erro ao excluir prêmio:", error);
@@ -167,6 +170,7 @@ export default function RachaDetails() {
       });
       
       toast.success(`Jogador ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+      invalidateRachaCache(id!);
       
       // Atualizar lista localmente para refletir a mudança
       const fetchData = async () => {
@@ -188,35 +192,64 @@ export default function RachaDetails() {
   useEffect(() => {
     if (!id) return;
 
-    const fetchData = async () => {
+    const fetchData = async (fromCache = false) => {
       try {
+        // Verificar cache primeiro
+        if (fromCache) {
+          const cached = cacheGet<{
+            racha: RachaDetails;
+            ranking: RankingItem[];
+            partidas: Partida[];
+            jogadores: Jogador[];
+            premios: Premio[];
+          }>(`racha:${id}:all`);
+
+          if (cached) {
+            setRacha(cached.racha);
+            setRanking(cached.ranking);
+            setPartidas(cached.partidas);
+            setJogadores(cached.jogadores);
+            setPremios(cached.premios);
+            setLoading(false);
+            // Refrescar em background silenciosamente
+            fetchData(false);
+            return;
+          }
+        }
+
         const [rachaRes, rankingRes, partidasRes, jogadoresRes, premiosRes] =
           await Promise.all([
             api.get(`/rachas/${id}/`),
             api.get(`/rachas/${id}/ranking/`),
-            api.get(`/partidas/`), // Ajustar filtro no backend se necessário, ou filtrar aqui
+            api.get(`/partidas/?racha=${id}`),       // filtrado no servidor
             api.get(`/rachas/${id}/jogadores/`),
-            api.get(`/premios/`), // Ajustar filtro no backend se necessário
+            api.get(`/premios/?racha=${id}`),         // filtrado no servidor
           ]);
 
-        setRacha(rachaRes.data);
-        setRanking(rankingRes.data);
-
-        // Filtrar partidas deste racha (lidando com paginação se necessário)
         const partidasData = Array.isArray(partidasRes.data)
           ? partidasRes.data
           : partidasRes.data.results || [];
-        const partidasRacha = partidasData.filter((p: any) => p.racha === id);
-        setPartidas(partidasRacha);
 
-        setJogadores(jogadoresRes.data);
-
-        // Filtrar prêmios deste racha (lidando com paginação se necessário)
         const premiosData = Array.isArray(premiosRes.data)
           ? premiosRes.data
           : premiosRes.data.results || [];
-        const premiosRacha = premiosData.filter((p: any) => p.racha === id);
-        setPremios(premiosRacha);
+
+        const payload = {
+          racha: rachaRes.data,
+          ranking: rankingRes.data,
+          partidas: partidasData,
+          jogadores: jogadoresRes.data,
+          premios: premiosData,
+        };
+
+        // Salvar no cache
+        cacheSet(`racha:${id}:all`, payload);
+
+        setRacha(payload.racha);
+        setRanking(payload.ranking);
+        setPartidas(payload.partidas);
+        setJogadores(payload.jogadores);
+        setPremios(payload.premios);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -224,7 +257,7 @@ export default function RachaDetails() {
       }
     };
 
-    fetchData();
+    fetchData(true); // tenta cache primeiro
   }, [id]);
 
   if (loading) {
@@ -327,6 +360,7 @@ export default function RachaDetails() {
                         </td>
                         <td className="py-4">
                           <PlayerCardModal
+                            rachaName={racha.nome}
                             player={{
                               name: item.jogador_nome,
                               username: item.jogador_username,
@@ -563,6 +597,7 @@ export default function RachaDetails() {
                 return (
                   <PlayerCardModal
                     key={item.id}
+                    rachaName={racha.nome}
                     player={{
                       name: `${item.jogador.first_name} ${item.jogador.last_name}`,
                       username: item.jogador.username,
@@ -621,6 +656,7 @@ export default function RachaDetails() {
                         >
                           <td className="p-4">
                             <PlayerCardModal
+                              rachaName={racha.nome}
                               player={{
                                 name: `${item.jogador.first_name} ${item.jogador.last_name}`,
                                 username: item.jogador.username,

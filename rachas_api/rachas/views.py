@@ -429,62 +429,86 @@ class RachaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     def _calcular_ranking(self, racha, request):
-        """Calcula ranking geral do racha"""
-        jogadores = racha.jogadores_racha.filter(ativo=True)
+        """Calcula ranking geral do racha — versão otimizada (4 queries totais)"""
+
+        # 1. Jogadores ativos com dados do usuário em uma única query
+        jogadores_racha = (
+            racha.jogadores_racha
+            .filter(ativo=True)
+            .select_related('jogador')
+        )
+
+        jogadores_ids = [jr.jogador_id for jr in jogadores_racha]
+
+        # 2. Gols por jogador (1 query)
+        gols_map = dict(
+            RegistroPartida.objects
+            .filter(partida__racha=racha, jogador_gol_id__in=jogadores_ids)
+            .values('jogador_gol_id')
+            .annotate(total=Count('id'))
+            .values_list('jogador_gol_id', 'total')
+        )
+
+        # 3. Assistências por jogador (1 query)
+        assistencias_map = dict(
+            RegistroPartida.objects
+            .filter(partida__racha=racha, jogador_assistencia_id__in=jogadores_ids)
+            .exclude(jogador_assistencia_id__isnull=True)
+            .values('jogador_assistencia_id')
+            .annotate(total=Count('id'))
+            .values_list('jogador_assistencia_id', 'total')
+        )
+
+        # 4. Presenças por jogador (1 query)
+        presencas_map = dict(
+            JogadorPartida.objects
+            .filter(partida__racha=racha, jogador_id__in=jogadores_ids, presente=True)
+            .values('jogador_id')
+            .annotate(total=Count('id'))
+            .values_list('jogador_id', 'total')
+        )
+
+        # 5. Pontos de prêmios por jogador (1 query)
+        premios_map = dict(
+            PremioPartida.objects
+            .filter(partida__racha=racha, jogador_id__in=jogadores_ids)
+            .values('jogador_id')
+            .annotate(total=Sum('premio__valor_pontos'))
+            .values_list('jogador_id', 'total')
+        )
+
         ranking = []
-        
-        for jogador_racha in jogadores:
-            jogador = jogador_racha.jogador
-            
-            # Contar gols
-            gols = RegistroPartida.objects.filter(
-                partida__racha=racha,
-                jogador_gol=jogador
-            ).count()
-            
-            # Contar assistências
-            assistencias = RegistroPartida.objects.filter(
-                partida__racha=racha,
-                jogador_assistencia=jogador
-            ).count()
-            
-            # Contar presenças
-            presencas = JogadorPartida.objects.filter(
-                partida__racha=racha,
-                jogador=jogador,
-                presente=True
-            ).count()
-            
-            # Somar prêmios
-            premios_pontos = PremioPartida.objects.filter(
-                partida__racha=racha,
-                jogador=jogador
-            ).aggregate(total=Sum('premio__valor_pontos'))['total'] or 0
-            
-            # Calcular pontuação total
+        for jr in jogadores_racha:
+            jogador = jr.jogador
+            jid = jogador.id
+
+            gols         = gols_map.get(jid, 0)
+            assistencias = assistencias_map.get(jid, 0)
+            presencas    = presencas_map.get(jid, 0)
+            premios_pts  = premios_map.get(jid) or 0
+
             pontuacao_total = (
-                gols * racha.ponto_gol +
+                gols         * racha.ponto_gol +
                 assistencias * racha.ponto_assistencia +
-                presencas * racha.ponto_presenca +
-                premios_pontos
+                presencas    * racha.ponto_presenca +
+                premios_pts
             )
-            
+
             ranking.append({
-                'jogador_id': jogador.id,
-                'jogador_nome': jogador.get_full_name(),
-                'jogador_username': jogador.username,
-                'jogador_imagem_perfil': get_image_url(jogador.imagem_perfil) or '',
-                'posicao': jogador.posicao,
-                'gols': gols,
-                'assistencias': assistencias,
-                'presencas': presencas,
-                'premios_pontos': premios_pontos,
-                'pontuacao_total': pontuacao_total
+                'jogador_id':             jid,
+                'jogador_nome':           jogador.get_full_name(),
+                'jogador_username':       jogador.username,
+                'jogador_imagem_perfil':  get_image_url(jogador.imagem_perfil) or '',
+                'posicao':                jogador.posicao,
+                'gols':                   gols,
+                'assistencias':           assistencias,
+                'presencas':              presencas,
+                'premios_pontos':         premios_pts,
+                'pontuacao_total':        pontuacao_total,
             })
-        
-        # Ordenar por pontuação
+
         ranking.sort(key=lambda x: x['pontuacao_total'], reverse=True)
-        
+
         serializer = RankingJogadorSerializer(ranking, many=True)
         return Response(serializer.data)
 
@@ -540,9 +564,13 @@ class PartidaViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Filtrar partidas dos rachas do usuário
-        return Partida.objects.filter(
+        queryset = Partida.objects.filter(
             racha__jogadores_racha__jogador=self.request.user
         ).distinct()
+        racha_id = self.request.query_params.get('racha')
+        if racha_id:
+            queryset = queryset.filter(racha_id=racha_id)
+        return queryset
     
     def perform_create(self, serializer):
         """Cria partida apenas se usuário é admin do racha"""

@@ -43,85 +43,93 @@
 }
 
 :root {
-  /* Light Theme: Verde e Branco */
-  --primary: oklch(0.82 0.2 142); /* #16ed48 */
-  --primary-foreground: oklch(0.15 0.05 142); /* Dark Green Text */
+  /* === Light Theme: Gamified / Duolingo-inspired === */
+  --primary: oklch(0.78 0.23 142);
+  --primary-foreground: oklch(0.12 0.04 142);
 
-  --background: oklch(0.98 0.01 142); /* Very light green tint */
-  --foreground: oklch(0.15 0.05 142); /* Dark Green Text */
+  --background: oklch(0.97 0.008 142);
+  --foreground: oklch(0.14 0.04 142);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.05 142);
+  --card-foreground: oklch(0.14 0.04 142);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.05 142);
+  --popover-foreground: oklch(0.14 0.04 142);
 
-  --secondary: oklch(0.95 0.03 142); /* Light Green */
-  --secondary-foreground: oklch(0.25 0.1 142);
+  --secondary: oklch(0.93 0.04 142);
+  --secondary-foreground: oklch(0.22 0.08 142);
 
-  --muted: oklch(0.96 0.01 142);
-  --muted-foreground: oklch(0.5 0.05 142);
+  --muted: oklch(0.94 0.015 142);
+  --muted-foreground: oklch(0.52 0.05 142);
 
-  --accent: oklch(0.92 0.05 142);
-  --accent-foreground: oklch(0.2 0.1 142);
+  --accent: oklch(0.90 0.07 142);
+  --accent-foreground: oklch(0.18 0.08 142);
 
-  --destructive: oklch(0.6 0.2 25);
+  --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.9 0.02 142);
-  --input: oklch(0.9 0.02 142);
-  --ring: oklch(0.82 0.2 142); /* #16ed48 */
+  --border: oklch(0.88 0.025 142);
+  --input: oklch(0.88 0.025 142);
+  --ring: oklch(0.78 0.23 142);
 
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  --sidebar: oklch(0.98 0.01 142);
-  --sidebar-foreground: oklch(0.15 0.05 142);
-  --sidebar-primary: oklch(0.82 0.2 142);
-  --sidebar-primary-foreground: oklch(0.15 0.05 142);
-  --sidebar-accent: oklch(0.95 0.03 142);
-  --sidebar-accent-foreground: oklch(0.25 0.1 142);
-  --sidebar-border: oklch(0.9 0.02 142);
-  --sidebar-ring: oklch(0.82 0.2 142);
+  --sidebar: oklch(0.97 0.008 142);
+  --sidebar-foreground: oklch(0.14 0.04 142);
+  --sidebar-primary: oklch(0.78 0.23 142);
+  --sidebar-primary-foreground: oklch(0.12 0.04 142);
+  --sidebar-accent: oklch(0.93 0.04 142);
+  --sidebar-accent-foreground: oklch(0.22 0.08 142);
+  --sidebar-border: oklch(0.88 0.025 142);
+  --sidebar-ring: oklch(0.78 0.23 142);
+
+  --glow-primary: 0 0 16px oklch(0.78 0.23 142 / 0.35);
+  --shadow-card: 0 4px 0 oklch(0.75 0.12 142);
+  --shadow-btn: 0 4px 0 oklch(0.52 0.2 142);
 }
 
 .dark {
-  /* Dark Theme: Preto e Verde Neon */
-  --primary: oklch(0.82 0.2 142); /* #16ed48 */
-  --primary-foreground: oklch(0.1 0.02 142); /* Almost Black */
+  /* === Dark Theme: Deep dark + Neon Green === */
+  --primary: oklch(0.82 0.25 142);
+  --primary-foreground: oklch(0.08 0.02 142);
 
-  --background: oklch(0.15 0.02 142); /* #0a0a0a equivalent in OKLCH */
-  --foreground: oklch(0.98 0.01 142); /* White */
+  --background: oklch(0.12 0.02 142);
+  --foreground: oklch(0.97 0.01 142);
 
-  --card: oklch(0.2 0.03 142); /* #1a1a1a equivalent */
-  --card-foreground: oklch(0.98 0.01 142);
+  --card: oklch(0.17 0.025 142);
+  --card-foreground: oklch(0.97 0.01 142);
 
-  --popover: oklch(0.2 0.03 142);
-  --popover-foreground: oklch(0.98 0.01 142);
+  --popover: oklch(0.17 0.025 142);
+  --popover-foreground: oklch(0.97 0.01 142);
 
-  --secondary: oklch(0.25 0.05 142);
-  --secondary-foreground: oklch(0.98 0.01 142);
+  --secondary: oklch(0.22 0.045 142);
+  --secondary-foreground: oklch(0.97 0.01 142);
 
-  --muted: oklch(0.25 0.02 142);
-  --muted-foreground: oklch(0.7 0.05 142);
+  --muted: oklch(0.22 0.025 142);
+  --muted-foreground: oklch(0.65 0.06 142);
 
-  --accent: oklch(0.25 0.05 142);
-  --accent-foreground: oklch(0.82 0.2 142); /* Neon Green Text */
+  --accent: oklch(0.23 0.055 142);
+  --accent-foreground: oklch(0.82 0.25 142);
 
-  --destructive: oklch(0.4 0.2 25);
+  --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.3 0.05 142);
-  --input: oklch(0.3 0.05 142);
-  --ring: oklch(0.82 0.2 142); /* #16ed48 */
+  --border: oklch(0.27 0.045 142);
+  --input: oklch(0.27 0.045 142);
+  --ring: oklch(0.82 0.25 142);
 
-  --sidebar: oklch(0.15 0.02 142);
-  --sidebar-foreground: oklch(0.98 0.01 142);
-  --sidebar-primary: oklch(0.82 0.2 142);
-  --sidebar-primary-foreground: oklch(0.1 0.02 142);
-  --sidebar-accent: oklch(0.25 0.05 142);
-  --sidebar-accent-foreground: oklch(0.82 0.2 142);
-  --sidebar-border: oklch(0.3 0.05 142);
-  --sidebar-ring: oklch(0.82 0.2 142);
+  --sidebar: oklch(0.12 0.02 142);
+  --sidebar-foreground: oklch(0.97 0.01 142);
+  --sidebar-primary: oklch(0.82 0.25 142);
+  --sidebar-primary-foreground: oklch(0.08 0.02 142);
+  --sidebar-accent: oklch(0.22 0.045 142);
+  --sidebar-accent-foreground: oklch(0.82 0.25 142);
+  --sidebar-border: oklch(0.27 0.045 142);
+  --sidebar-ring: oklch(0.82 0.25 142);
+
+  --glow-primary: 0 0 20px oklch(0.82 0.25 142 / 0.45);
+  --shadow-card: 0 4px 0 oklch(0.07 0.01 142);
+  --shadow-btn: 0 4px 0 oklch(0.45 0.22 142);
 }
 
 @layer base {
@@ -129,8 +137,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: "Poppins", sans-serif;
+    @apply bg-background text-foreground;
+    font-family: "Nunito", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -142,6 +151,10 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -185,5 +198,55 @@
       padding-right: 2rem;
       max-width: 1280px; /* Standard content width */
     }
+  }
+
+  /* === Gamified / Duolingo-style utilities === */
+
+  .glow-primary {
+    box-shadow: var(--glow-primary);
+  }
+
+  /* 3D pressed button feel */
+  .btn-game {
+    box-shadow: var(--shadow-btn);
+    transform: translateY(0);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .btn-game:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 oklch(0.45 0.22 142);
+  }
+  .btn-game:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 oklch(0.45 0.22 142);
+  }
+
+  /* Gamified card with bottom shadow */
+  .card-game {
+    box-shadow: var(--shadow-card);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card-game:hover {
+    transform: translateY(-2px);
+  }
+
+  @keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+
+  .neon-text {
+    color: var(--primary);
+    text-shadow: var(--glow-primary);
+  }
+
+  .nav-active {
+    background: color-mix(in oklch, var(--primary) 12%, transparent);
+    color: var(--primary);
+    font-weight: 800;
+    border-left: 3px solid var(--primary);
   }
 }

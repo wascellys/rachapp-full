@@ -1,4 +1,112 @@
-/* ===== Container ===== */
+/* ===================================================
+   PlayerCardPremium.css — EA FC / FIFA Ultimate Team
+=================================================== */
+
+/* ─── Flip wrapper ─── */
+.eafc-card-wrapper {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── Flip inner — transform-style preserve-3d set inline ─── */
+.eafc-flip-inner {
+  transform-style: preserve-3d;
+}
+
+/* ─── Both faces share these ─── */
+.eafc-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ─── Smooth stat bar grow on flip-in ─── */
+.eafc-back .stat-bar-fill {
+  animation: statBarGrow 0.6s ease 0.4s both;
+}
+@keyframes statBarGrow {
+  from { width: 0 !important; }
+}
+
+/* ─── Variáveis de glare ─── */
+.eafc-card {
+  --glare-x: 50%;
+  --glare-y: 50%;
+  --glare-opacity: 0;
+  --rgb-glow: 100, 100, 255;
+  --glow-opacity: 0;
+}
+
+/* ─── Glare holográfico ─── */
+.eafc-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  border-radius: 14px;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    ellipse at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 30%,
+    transparent 65%
+  );
+  opacity: var(--glare-opacity, 0);
+  transition: opacity 0.15s ease-out;
+}
+
+/* ─── Sheen rainbow strip (holographic) ─── */
+.eafc-card::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 13px;
+  pointer-events: none;
+  z-index: 31;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(0, 212, 255, 0.06) 30%,
+    rgba(168, 85, 247, 0.06) 40%,
+    rgba(236, 72, 153, 0.06) 50%,
+    rgba(255, 215, 0, 0.06) 60%,
+    transparent 70%
+  );
+  opacity: var(--glare-opacity, 0);
+  transition: opacity 0.2s ease;
+  mix-blend-mode: screen;
+}
+
+/* ─── Seleção desabilitada ─── */
+.eafc-card,
+.eafc-card * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── Responsividade mobile ─── */
+@media (max-width: 480px) {
+  .eafc-card {
+    width: 200px !important;
+    height: 283px !important;
+  }
+}
+
+/* ─── Acessibilidade ─── */
+@media (prefers-reduced-motion: reduce) {
+  .eafc-card {
+    transition: none !important;
+  }
+  .eafc-glare,
+  .eafc-card::after {
+    display: none;
+  }
+}
+
+
+/* ─────────────────────────────────────────────────
+   LEGADO: classes premium-* mantidas para compatibilidade
+   com PlayerCardPremiun.tsx
+───────────────────────────────────────────────── */
 .premium-card {
   width: 250px;
   height: 370px;
@@ -12,7 +120,6 @@
   cursor: grabbing;
 }
 
-/* ===== Inner ===== */
 .premium-card-inner {
   width: 100%;
   height: 100%;
@@ -24,7 +131,6 @@
   will-change: transform, box-shadow;
   border-radius: 8px;
   overflow: hidden;
-  /* Box shadow com brilho RGB dinâmico */
   box-shadow:
     0 8px 32px rgba(30, 5, 255, 0.4),
     0 0 0 10px rgba(212, 7, 178, 0.1),
@@ -32,7 +138,6 @@
     inset 0 0 30px 0px rgba(var(--rgb-glow, 100, 100, 255), 0.1);
 }
 
-/* ===== Camadas ===== */
 .premium-layer {
   position: absolute;
   inset: 0;
@@ -40,28 +145,12 @@
   pointer-events: none;
 }
 
-/* ===== Profundidade - Paralaxe ===== */
-[data-depth="0"] {
-  transform: translateZ(0px);
-}
+[data-depth="0"]  { transform: translateZ(0px);  }
+[data-depth="20"] { transform: translateZ(20px); }
+[data-depth="40"] { transform: translateZ(40px); }
+[data-depth="60"] { transform: translateZ(60px); }
+[data-depth="80"] { transform: translateZ(80px); }
 
-[data-depth="20"] {
-  transform: translateZ(20px);
-}
-
-[data-depth="40"] {
-  transform: translateZ(40px);
-}
-
-[data-depth="60"] {
-  transform: translateZ(60px);
-}
-
-[data-depth="80"] {
-  transform: translateZ(80px);
-}
-
-/* ===== Glare - Brilho Dinâmico ===== */
 .premium-glare {
   position: absolute;
   inset: 0;
@@ -77,20 +166,17 @@
   transition: opacity 0.15s ease-out;
 }
 
-/* ===== Anti seleção ===== */
 .premium-card,
 .premium-card * {
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* ===== Responsividade ===== */
 @media (max-width: 768px) {
   .premium-card {
     width: 200px;
     height: 320px;
   }
-
   .premium-card-inner {
     transition:
       transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
@@ -98,10 +184,30 @@
   }
 }
 
-/* ===== Acessibilidade ===== */
 @media (prefers-reduced-motion: reduce) {
   .premium-card-inner,
   .premium-glare {
     transition: none;
   }
+}
+
+/* ─── card-3d (usado em versão anterior) ─── */
+.card-3d {
+  transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform;
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(var(--rgb-glow, 100, 200, 255), 0.25) 0%,
+    transparent 60%
+  );
+  opacity: var(--glow-opacity, 0);
+  transition: opacity 0.2s ease;
+  mix-blend-mode: screen;
+  border-radius: inherit;
 }
