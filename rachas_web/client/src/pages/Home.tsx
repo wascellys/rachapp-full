@@ -56,18 +56,18 @@ export default function Home() {
   if (loading) {
     return (
       <div className="space-y-8">
-         <div className="flex justify-between items-center">
-             <div className="space-y-2">
-                <Skeleton className="h-10 w-48" />
-                <Skeleton className="h-4 w-64" />
-             </div>
-             <Skeleton className="h-10 w-32" />
-         </div>
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-               <Skeleton key={i} className="h-48 w-full rounded-xl" />
-            ))}
-         </div>
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-48 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -135,15 +135,15 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {rachas.map(racha => (
             <Link key={racha.id} href={`/racha/${racha.id}`}>
-              <Card className="hover:border-primary/50 transition-all cursor-pointer group h-full flex flex-col">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
+              <Card className="hover:border-primary/50 transition-all cursor-pointer group h-full flex flex-col gap-0 py-4">
+                <CardHeader className="pb-2 px-4">
+                  <div className="flex justify-between items-center">
                     <Badge
                       variant="outline"
-                      className="mb-2 bg-primary/5 text-primary border-primary/20"
+                      className="bg-primary/5 text-primary border-primary/20 text-xs"
                     >
                       {racha.codigo_convite}
                     </Badge>
@@ -154,35 +154,25 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                  <CardTitle className="text-base group-hover:text-primary transition-colors mt-1">
                     {racha.nome}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1">
-                  {/* Em telas maiores, stats ficam em linha */}
-                  <div className="flex flex-row gap-3 mt-2">
-                    <div className="flex flex-1 flex-col items-center p-3 bg-muted/30 rounded-lg">
-                      <FaUsers className="text-primary mb-1" />
-                      <span className="text-2xl font-bold">
-                        {racha.total_jogadores}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Jogadores
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col items-center p-3 bg-muted/30 rounded-lg">
-                      <FaTrophy className="text-yellow-500 mb-1" />
-                      <span className="text-2xl font-bold">-</span>
-                      <span className="text-xs text-muted-foreground">
-                        Ranking
-                      </span>
+                <CardContent className="flex-1 px-4 py-2">
+                  {/* Layout horizontal compacto */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg">
+                      <FaUsers className="text-primary text-sm" />
+                      <span className="font-bold text-lg leading-none">{racha.total_jogadores}</span>
+                      <span className="text-xs text-muted-foreground">jogadores</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-0">
+                <CardFooter className="px-4 pt-2 pb-0">
                   <Button
                     variant="ghost"
-                    className="w-full group-hover:bg-primary/10 group-hover:text-primary"
+                    size="sm"
+                    className="w-full group-hover:bg-primary/10 group-hover:text-primary text-xs"
                   >
                     Ver Detalhes <FaArrowRight className="ml-2 h-3 w-3" />
                   </Button>

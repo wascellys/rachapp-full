@@ -105,7 +105,7 @@ export function PlayerCardFront({ name, username, position, overall, stats, phot
   ];
 
   return (
-    <div style={{ width: 220, height: 310, position: "relative", borderRadius: 16, padding: 3, background: s.outerBorder, boxShadow: s.glow, flexShrink: 0 }}>
+    <div style={{ width: 220, height: 310, position: "relative", borderRadius: 16, padding: 3, background: s.outerBorder, flexShrink: 0 }}>
       <div style={{ width: "100%", height: "100%", borderRadius: 13, overflow: "hidden", position: "relative", background: s.cardBg }}>
         {/* Foto cobre a carta inteira */}
         {photo ? (
@@ -166,7 +166,7 @@ export function PlayerCardBack({ name, username, position, overall, stats, photo
   const tierLabel = cardType === "premium" ? "⭐ Ícone" : cardType === "gold" ? "🥇 Ouro" : cardType === "silver" ? "🥈 Prata" : "🥉 Bronze";
 
   return (
-    <div style={{ width: 220, height: 370, position: "relative", borderRadius: 16, padding: 3, background: s.outerBorder, boxShadow: s.glow, flexShrink: 0 }}>
+    <div style={{ width: 220, height: 310, position: "relative", borderRadius: 16, padding: 3, background: s.outerBorder, flexShrink: 0 }}>
       <div style={{ width: "100%", height: "100%", borderRadius: 13, overflow: "hidden", background: s.backBg, display: "flex", flexDirection: "column" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${s.dividerColor}`, background: "rgba(0,0,0,.3)", flexShrink: 0 }}>

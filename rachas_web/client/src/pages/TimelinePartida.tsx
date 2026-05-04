@@ -72,7 +72,7 @@ interface Partida {
   racha_is_admin: boolean;
 }
 
-type TimelineEvent = 
+type TimelineEvent =
   | { type: 'GOL', data: Registro, timestamp: number }
   | { type: 'PREMIO', data: PremioPartida, timestamp: number };
 
@@ -94,7 +94,7 @@ export default function TimelinePartida() {
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados para edição
+  // Estados para edição de gols
   const [registroEditando, setRegistroEditando] = useState<Registro | null>(
     null
   );
@@ -102,6 +102,13 @@ export default function TimelinePartida() {
   const [novoAutorGol, setNovoAutorGol] = useState<string>("");
   const [novoAutorAssistencia, setNovoAutorAssistencia] =
     useState<string>("nenhum");
+
+  // Estados para edição de prêmios
+  const [premioEditando, setPremioEditando] = useState<PremioPartida | null>(null);
+  const [modalEdicaoPremioAberto, setModalEdicaoPremioAberto] = useState(false);
+  const [novoJogadorPremio, setNovoJogadorPremio] = useState<string>("");
+  const [novoPremioId, setNovoPremioId] = useState<string>("");
+  const [premiosDisponiveis, setPremiosDisponiveis] = useState<Premio[]>([]);
 
   useEffect(() => {
     if (partidaId) {
@@ -120,7 +127,6 @@ export default function TimelinePartida() {
         setRachaDetails(rachaRes.data);
       }
 
-      // Carregar jogadores da partida para o modal de edição
       const jogadoresRes = await api.get(`/partidas/${partidaId}/jogadores/`);
       // Mapear a resposta para extrair os dados do usuário
       const listaJogadores = jogadoresRes.data
@@ -129,6 +135,13 @@ export default function TimelinePartida() {
           (a.first_name || "").localeCompare(b.first_name || "")
         );
       setJogadores(listaJogadores);
+
+      // Carregar prêmios disponíveis no racha para o modal de edição
+      if (partidaRes.data.racha) {
+        const premiosRes = await api.get(`/premios/?racha=${partidaRes.data.racha}`);
+        const lista = Array.isArray(premiosRes.data) ? premiosRes.data : premiosRes.data.results || [];
+        setPremiosDisponiveis(lista);
+      }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
       toast.error("Erro ao carregar linha do tempo");
@@ -159,6 +172,47 @@ export default function TimelinePartida() {
       toast.error("Erro ao remover gol");
     }
   };
+
+  const handleRemoverPremio = async (premioPartidaId: string, nomePremio: string) => {
+    if (!confirm(`Tem certeza que deseja remover o prêmio "${nomePremio}"?`)) return;
+
+    try {
+      await api.delete(`/partidas/${partidaId}/remover_premio/`, {
+        data: { premio_partida_id: premioPartidaId },
+      });
+      toast.success("Prêmio removido com sucesso!");
+      carregarDados();
+    } catch (error) {
+      console.error("Erro ao remover prêmio:", error);
+      toast.error("Erro ao remover prêmio");
+    }
+  };
+
+  const abrirModalEdicaoPremio = (premioPartida: PremioPartida) => {
+    setPremioEditando(premioPartida);
+    setNovoJogadorPremio(premioPartida.jogador.id);
+    setNovoPremioId(premioPartida.premio.id);
+    setModalEdicaoPremioAberto(true);
+  };
+
+  const handleSalvarEdicaoPremio = async () => {
+    if (!premioEditando) return;
+
+    try {
+      await api.put(`/partidas/${partidaId}/editar_premio/`, {
+        premio_partida_id: premioEditando.id,
+        jogador_id: novoJogadorPremio,
+        premio_id: novoPremioId,
+      });
+      toast.success("Prêmio atualizado com sucesso!");
+      setModalEdicaoPremioAberto(false);
+      carregarDados();
+    } catch (error) {
+      console.error("Erro ao editar prêmio:", error);
+      toast.error("Erro ao atualizar prêmio");
+    }
+  };
+
 
   const abrirModalEdicao = (registro: Registro) => {
     setRegistroEditando(registro);
@@ -213,15 +267,15 @@ export default function TimelinePartida() {
 
   // Combinar e ordenar registros e prêmios do mais recente para o mais antigo
   const eventos: TimelineEvent[] = [
-    ...partida.registros.map(r => ({ 
-      type: 'GOL' as const, 
-      data: r, 
-      timestamp: new Date(r.criado_em).getTime() 
+    ...partida.registros.map(r => ({
+      type: 'GOL' as const,
+      data: r,
+      timestamp: new Date(r.criado_em).getTime()
     })),
-    ...partida.premios_partida.map(p => ({ 
-      type: 'PREMIO' as const, 
-      data: p, 
-      timestamp: new Date(p.criado_em).getTime() 
+    ...partida.premios_partida.map(p => ({
+      type: 'PREMIO' as const,
+      data: p,
+      timestamp: new Date(p.criado_em).getTime()
     }))
   ].sort((a, b) => b.timestamp - a.timestamp);
 
@@ -264,39 +318,58 @@ export default function TimelinePartida() {
                 {eventos.map((evento) => (
                   <div key={evento.type === 'GOL' ? evento.data.id : evento.data.id} className="relative">
                     {/* Marcador da linha do tempo */}
-                    <div className={`absolute -left-[41px] top-15 h-5 w-5 rounded-full border-4 border-background flex items-center justify-center ${
-                      evento.type === 'GOL' ? 'bg-primary' : 'bg-yellow-500'
-                    }`}></div>
+                    <div className={`absolute -left-[41px] top-15 h-5 w-5 rounded-full border-4 border-background flex items-center justify-center ${evento.type === 'GOL' ? 'bg-primary' : 'bg-yellow-500'
+                      }`}></div>
 
                     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2 xl:mb-4 justify-content-center align-items-center">
-                          <div className={`flex items-center gap-2 text-sm font-medium ${
-                            evento.type === 'GOL' ? 'text-primary' : 'text-yellow-600'
-                          }`}>
+                          <div className={`flex items-center gap-2 text-sm font-medium ${evento.type === 'GOL' ? 'text-primary' : 'text-yellow-600'
+                            }`}>
                             {evento.type === 'GOL' ? <Clock className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
                             {formatarHora(evento.data.criado_em)}
                           </div>
-                          
+
                           {evento.type === 'GOL' && partida.racha_is_admin && (
                             <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-primary"
-                              onClick={() => abrirModalEdicao(evento.data)}
-                            >
-                              <Edit2 className="h-2 w-2" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              onClick={() => handleRemoverRegistro(evento.data.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                onClick={() => abrirModalEdicao(evento.data)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoverRegistro(evento.data.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+
+                          {evento.type === 'PREMIO' && partida.racha_is_admin && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-yellow-500"
+                                onClick={() => abrirModalEdicaoPremio(evento.data)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleRemoverPremio(evento.data.id, evento.data.premio.nome)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
                         </div>
 
@@ -305,7 +378,7 @@ export default function TimelinePartida() {
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="text-2xl flex-shrink-0">⚽</span>
                               <span className="font-bold text-foreground text-lg truncate">
-                                {evento.data.jogador_gol 
+                                {evento.data.jogador_gol
                                   ? (evento.data.jogador_gol.first_name || evento.data.jogador_gol.username)
                                   : "Anônimo / Outro"}
                               </span>
@@ -323,22 +396,22 @@ export default function TimelinePartida() {
                           </div>
                         ) : (
                           <div className="space-y-1">
-                             <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
                               <span className="text-2xl flex-shrink-0">🏆</span>
                               <span className="font-bold text-foreground text-lg truncate">
                                 {evento.data.premio.nome}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-muted-foreground text-sm pl-9 min-w-0">
-                                <span className="flex-shrink-0">Para:</span>
-                                <span className="font-medium text-foreground truncate">
-                                  {evento.data.jogador.first_name ||
-                                    evento.data.jogador.username}
-                                </span>
-                                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex-shrink-0">
-                                  +{evento.data.premio.valor_pontos} pts
-                                </span>
-                              </div>
+                              <span className="flex-shrink-0">Para:</span>
+                              <span className="font-medium text-foreground truncate">
+                                {evento.data.jogador.first_name ||
+                                  evento.data.jogador.username}
+                              </span>
+                              <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                                +{evento.data.premio.valor_pontos} pts
+                              </span>
+                            </div>
                           </div>
                         )}
                       </CardContent>
@@ -375,7 +448,7 @@ export default function TimelinePartida() {
                     });
 
                     if (topGols.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Sem gols registrados</p>;
-                    
+
                     return (
                       <div className="space-y-3">
                         {topGols.slice(0, 3).map((item, idx) => (
@@ -461,7 +534,7 @@ export default function TimelinePartida() {
                 <CardContent>
                   {(() => {
                     const pontos: Record<string, { jogador: Jogador, count: number }> = {};
-                    
+
                     // Pontos de Gols e Assistências
                     partida.registros.forEach(r => {
                       // Gols
@@ -470,7 +543,7 @@ export default function TimelinePartida() {
                         if (!pontos[id]) pontos[id] = { jogador: r.jogador_gol, count: 0 };
                         pontos[id].count += (rachaDetails?.ponto_gol || 0);
                       }
-                      
+
                       // Assistências
                       if (r.jogador_assistencia) {
                         const id = r.jogador_assistencia.id;
@@ -485,7 +558,7 @@ export default function TimelinePartida() {
                       if (!pontos[id]) pontos[id] = { jogador: p.jogador, count: 0 };
                       pontos[id].count += p.premio.valor_pontos;
                     });
-                    
+
                     const topPontos = Object.values(pontos).sort((a, b) => {
                       const diff = b.count - a.count;
                       if (diff !== 0) return diff;
@@ -531,29 +604,29 @@ export default function TimelinePartida() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       {partida.premios_partida
                         .sort((a, b) => (
-                           a.jogador.first_name || ""
+                          a.jogador.first_name || ""
                         ).localeCompare(b.jogador.first_name || ""))
                         .map(premio => (
-                        <div key={premio.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border min-w-0">
-                          <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 flex-shrink-0">
-                             <Trophy className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-sm truncate">{premio.premio.nome}</p>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
-                              <span className="flex-shrink-0">Para:</span>
-                              <span className="font-medium text-foreground truncate">
-                                {premio.jogador.first_name} {premio.jogador.last_name}
+                          <div key={premio.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border min-w-0">
+                            <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500 flex-shrink-0">
+                              <Trophy className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-sm truncate">{premio.premio.nome}</p>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground min-w-0">
+                                <span className="flex-shrink-0">Para:</span>
+                                <span className="font-medium text-foreground truncate">
+                                  {premio.jogador.first_name} {premio.jogador.last_name}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="ml-auto flex-shrink-0">
+                              <span className="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                                +{premio.premio.valor_pontos} pts
                               </span>
                             </div>
                           </div>
-                          <div className="ml-auto flex-shrink-0">
-                            <span className="text-xs font-bold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                              +{premio.premio.valor_pontos} pts
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">Nenhum prêmio distribuído nesta partida</p>
@@ -625,6 +698,68 @@ export default function TimelinePartida() {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edição de Prêmio */}
+      <Dialog open={modalEdicaoPremioAberto} onOpenChange={setModalEdicaoPremioAberto}>
+        <DialogContent className="bg-card border-border sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Editar Prêmio
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Prêmio</Label>
+              <Select value={novoPremioId} onValueChange={setNovoPremioId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o prêmio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {premiosDisponiveis.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nome} ({p.valor_pontos} pts)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Para qual jogador</Label>
+              <Select value={novoJogadorPremio} onValueChange={setNovoJogadorPremio}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o jogador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jogadores.map(jogador => (
+                    <SelectItem key={jogador.id} value={jogador.id}>
+                      {jogador.first_name ? `${jogador.first_name} ${jogador.last_name}` : jogador.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setModalEdicaoPremioAberto(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSalvarEdicaoPremio}
+              className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>

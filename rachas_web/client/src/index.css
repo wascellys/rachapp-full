@@ -136,11 +136,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: "Nunito", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -152,13 +154,20 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 800;
     letter-spacing: -0.01em;
   }
 }
 
 @layer components {
+
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
@@ -176,8 +185,8 @@
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
-    padding-right: 1rem;
+    /* padding-left: 1rem; 16px - mobile padding */
+    /* padding-right: 1rem; */
   }
 
   .flex {
@@ -187,16 +196,19 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
+      /* 24px - tablet padding */
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
+      /* 32px - desktop padding */
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
+      /* Standard content width */
     }
   }
 
@@ -212,10 +224,12 @@
     transform: translateY(0);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
+
   .btn-game:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 0 oklch(0.45 0.22 142);
   }
+
   .btn-game:active:not(:disabled) {
     transform: translateY(3px);
     box-shadow: 0 1px 0 oklch(0.45 0.22 142);
@@ -226,14 +240,23 @@
     box-shadow: var(--shadow-card);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
+
   .card-game:hover {
     transform: translateY(-2px);
   }
 
   @keyframes badge-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
   }
+
   .badge-pulse {
     animation: badge-pulse 2s ease-in-out infinite;
   }

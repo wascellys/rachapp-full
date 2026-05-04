@@ -11,6 +11,7 @@ import * as htmlToImage from "html-to-image";
 import { PlayerCard } from "./PlayerCard";
 import { ShareCanvas } from "./ShareCanvas";
 import api from "@/lib/api";
+import { Capacitor } from "@capacitor/core";
 
 interface PlayerCardModalProps {
   children: React.ReactNode;
@@ -34,7 +35,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
 
       let playerForShare = { ...player };
       let photoObjectUrl: string | null = null;
-          
+
       if (player.photo) {
         try {
           const proxyUrl = `/usuarios/proxy_image/?url=${encodeURIComponent(player.photo)}`;
@@ -53,7 +54,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
       setSharePlayer(playerForShare);
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      let dataUrl;
+      let dataUrl: string;
       try {
         dataUrl = await htmlToImage.toPng(shareRef.current, {
           pixelRatio: 2,
@@ -64,7 +65,6 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
       } catch (genError) {
         console.error("Erro na geração da imagem:", genError);
         if (playerForShare.photo) {
-          console.warn("Retrying without photo...");
           setSharePlayer({ ...player, photo: null });
           await new Promise(r => setTimeout(r, 200));
           dataUrl = await htmlToImage.toPng(shareRef.current, {
@@ -80,8 +80,37 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
         if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl);
       }
 
-      const blob = await (await fetch(dataUrl)).blob();
       const fileName = `carta-${player.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+
+      // --- Ambiente nativo Android/iOS via Capacitor ---
+      if (Capacitor.isNativePlatform()) {
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+        const { Share } = await import("@capacitor/share");
+
+        // Remove o prefixo "data:image/png;base64," para obter só o base64
+        const base64Data = dataUrl.split(",")[1];
+
+        // Salva no diretório de cache do app
+        const fileResult = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache,
+        });
+
+        // Abre o share nativo (permite salvar na galeria, WhatsApp, etc.)
+        await Share.share({
+          title: `Carta de ${player.name}`,
+          text: `Confira a carta de ${player.name} no RachApp!`,
+          url: fileResult.uri,
+          dialogTitle: "Compartilhar carta",
+        });
+
+        toast.success("Pronto para compartilhar!");
+        return;
+      }
+
+      // --- Fallback Web (browser) ---
+      const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], fileName, { type: "image/png" });
       const shareData = { title: `Carta de ${player.name}`, text: `Confira a carta de ${player.name}!`, files: [file] };
 
@@ -94,7 +123,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
           link.download = fileName;
           link.href = dataUrl;
           link.click();
-          toast.success("Imagem salva no dispositivo!");
+          toast.success("Imagem salva!");
         }
       } catch (shareError) {
         console.error("Erro na API de share:", shareError);
@@ -112,6 +141,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
       setSharePlayer(player);
     }
   };
+
 
   return (
     <Dialog>

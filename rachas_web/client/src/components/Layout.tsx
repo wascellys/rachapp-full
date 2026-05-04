@@ -209,7 +209,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ===== Mobile Header ===== */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b-2 border-border bg-card sticky top-0 z-20">
+      {/* paddingTop = status bar height + espaçamento base (py-3 = 0.75rem) */}
+      <header
+        className="md:hidden flex items-center justify-between px-4 border-b-2 border-border bg-card sticky top-0 z-20"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)',
+          paddingBottom: '0.75rem',
+        }}
+      >
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-[0_2px_0_oklch(0.45_0.22_142)]">
             <FaFutbol className="text-primary-foreground text-xs" />

@@ -105,21 +105,21 @@ export default function Dashboard() {
                 </Button>
               </Link>
             </div>
-          
+
             {/* Quick Stats - Mobile visible, Desktop compact */}
             <div className="flex gap-4 md:gap-8 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-8 mt-2 md:mt-0">
-               <div className="text-center">
-                 <p className="text-3xl font-bold text-primary">{stats.partidas_count}</p>
-                 <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Jogos</p>
-               </div>
-               <div className="text-center">
-                 <p className="text-3xl font-bold text-primary">{stats.gols}</p>
-                 <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Gols</p>
-               </div>
-               <div className="text-center">
-                 <p className="text-3xl font-bold text-primary">{stats.assistencias}</p>
-                 <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Assists</p>
-               </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-primary">{stats.partidas_count}</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Jogos</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-primary">{stats.gols}</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Gols</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-primary">{stats.assistencias}</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Assists</p>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -129,11 +129,11 @@ export default function Dashboard() {
       <h2 className="text-xl font-bold flex items-center gap-2">
         <FaChartLine className="text-primary" /> Estatísticas Gerais
       </h2>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total de Gols */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium">Total de Gols</CardTitle>
             <FaFutbol className="h-4 w-4 text-primary" />
           </CardHeader>
@@ -199,9 +199,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats.partidas_count > 0 
-               ? Math.round(((stats.gols + stats.assistencias) / stats.partidas_count) * 100) / 100 
-               : 0}
+              {stats.partidas_count > 0
+                ? Math.round(((stats.gols + stats.assistencias) / stats.partidas_count) * 100) / 100
+                : 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Gols + Assists por jogo
@@ -225,15 +225,15 @@ export default function Dashboard() {
           <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl rounded-full bg-background">
-                <AvatarImage 
-                  src={stats.melhor_garcom.imagem_perfil || undefined} 
+                <AvatarImage
+                  src={stats.melhor_garcom.imagem_perfil || undefined}
                   className="object-cover"
                 />
                 <AvatarFallback className="text-4xl bg-muted">
                   {stats.melhor_garcom.nome[0]}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="text-center md:text-left flex-1">
                 <div className="flex flex-col md:flex-row items-center justify-center md:justify-start gap-3 mb-2">
                   <h3 className="text-3xl font-bold">{stats.melhor_garcom.nome}</h3>
@@ -241,16 +241,16 @@ export default function Dashboard() {
                     Garçom de Elite
                   </Badge>
                 </div>
-                
+
                 <p className="text-muted-foreground mb-6 max-w-lg">
                   Essa é a parceria que dá certo! {stats.melhor_garcom.nome} já te deixou na cara do gol {stats.melhor_garcom.assistencias} vezes.
                 </p>
 
                 <div className="flex justify-center md:justify-start gap-8">
-                   <div className="text-center">
-                     <p className="text-4xl font-bold text-primary">{stats.melhor_garcom.assistencias}</p>
-                     <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Assistências para você</p>
-                   </div>
+                  <div className="text-center">
+                    <p className="text-4xl font-bold text-primary">{stats.melhor_garcom.assistencias}</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Assistências para você</p>
+                  </div>
                 </div>
               </div>
             </div>

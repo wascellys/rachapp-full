@@ -105,7 +105,7 @@ export default function RachaDetails() {
   const [premiosViewMode, setPremiosViewMode] = useState<"grid" | "list">(
     "grid"
   );
-  
+
   const [isPremioModalOpen, setPremioModalOpen] = useState(false);
   const [editingPremio, setEditingPremio] = useState<Premio | null>(null);
 
@@ -168,21 +168,21 @@ export default function RachaDetails() {
         jogador_id: jogadorId,
         ativo: !currentStatus,
       });
-      
+
       toast.success(`Jogador ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
       invalidateRachaCache(id!);
-      
+
       // Atualizar lista localmente para refletir a mudança
       const fetchData = async () => {
-         const [rankingRes, jogadoresRes] = await Promise.all([
-             api.get(`/rachas/${id}/ranking/`),
-             api.get(`/rachas/${id}/jogadores/`)
-         ]);
-         setRanking(rankingRes.data);
-         setJogadores(jogadoresRes.data);
+        const [rankingRes, jogadoresRes] = await Promise.all([
+          api.get(`/rachas/${id}/ranking/`),
+          api.get(`/rachas/${id}/jogadores/`)
+        ]);
+        setRanking(rankingRes.data);
+        setJogadores(jogadoresRes.data);
       };
       fetchData();
-      
+
     } catch (error) {
       console.error("Erro ao alterar status:", error);
       toast.error("Erro ao alterar status do jogador.");
@@ -264,12 +264,12 @@ export default function RachaDetails() {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-2">
-           <Skeleton className="h-8 w-1/3" />
-           <Skeleton className="h-4 w-1/4" />
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-1/4" />
         </div>
         <div className="space-y-4">
-           <Skeleton className="h-10 w-full" />
-           <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -455,13 +455,13 @@ export default function RachaDetails() {
               )}
             </div>
           ) : partidasViewMode === "grid" ? (
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               {partidas.map(partida => (
                 <Card
                   key={partida.id}
                   className="hover:border-primary/50 transition-colors"
                 >
-                  <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <CardContent className="p-2 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div className="flex flex-row gap-4 items-center w-full sm:w-auto">
                       <div className="flex items-center gap-2 ml-4">
                         <Badge
@@ -587,10 +587,10 @@ export default function RachaDetails() {
                 );
                 const stats = rankingData
                   ? {
-                      matches: rankingData.presencas,
-                      goals: rankingData.gols,
-                      assists: rankingData.assistencias,
-                    }
+                    matches: rankingData.presencas,
+                    goals: rankingData.gols,
+                    assists: rankingData.assistencias,
+                  }
                   : { matches: 0, goals: 0, assists: 0 };
                 const overall = rankingData ? rankingData.pontuacao_total : 0;
 
@@ -708,15 +708,15 @@ export default function RachaDetails() {
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex flex-col items-end gap-2">
-                                {racha.is_admin && (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-muted-foreground">Status</span>
-                                        <Switch 
-                                            checked={item.ativo} 
-                                            onCheckedChange={() => handleToggleStatus(item.id, item.ativo, item.jogador.id)}
-                                        />
-                                    </div>
-                                )}
+                              {racha.is_admin && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Status</span>
+                                  <Switch
+                                    checked={item.ativo}
+                                    onCheckedChange={() => handleToggleStatus(item.id, item.ativo, item.jogador.id)}
+                                  />
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>

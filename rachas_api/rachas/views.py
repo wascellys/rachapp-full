@@ -812,7 +812,67 @@ class PartidaViewSet(viewsets.ModelViewSet):
         
         serializer = PremioPartidaSerializer(premio_partida)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
+    @action(detail=True, methods=['delete'])
+    def remover_premio(self, request, pk=None):
+        """Remove a assoçação de prêmio de uma partida"""
+        partida = self.get_object()
+
+        if request.user not in partida.racha.administrador.all():
+            return Response(
+                {'erro': 'Apenas o admin pode remover prêmios'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        premio_partida_id = request.data.get('premio_partida_id')
+        if not premio_partida_id:
+            return Response(
+                {'erro': 'premio_partida_id obrigatório'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        premio_partida = get_object_or_404(PremioPartida, id=premio_partida_id, partida=partida)
+        premio_partida.delete()
+        return Response({'mensagem': 'Prêmio removido com sucesso'})
+
+    @action(detail=True, methods=['put'])
+    def editar_premio(self, request, pk=None):
+        """Edita o jogador ou prêmio de uma associação PremioPartida"""
+        partida = self.get_object()
+
+        if request.user not in partida.racha.administrador.all():
+            return Response(
+                {'erro': 'Apenas o admin pode editar prêmios'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        premio_partida_id = request.data.get('premio_partida_id')
+        if not premio_partida_id:
+            return Response(
+                {'erro': 'premio_partida_id obrigatório'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        premio_partida = get_object_or_404(PremioPartida, id=premio_partida_id, partida=partida)
+
+        jogador_id = request.data.get('jogador_id')
+        premio_id = request.data.get('premio_id')
+
+        if jogador_id:
+            premio_partida.jogador = get_object_or_404(User, id=jogador_id)
+        if premio_id:
+            novo_premio = get_object_or_404(Premio, id=premio_id)
+            if novo_premio.racha != partida.racha:
+                return Response(
+                    {'erro': 'O prêmio não pertence ao racha desta partida'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            premio_partida.premio = novo_premio
+
+        premio_partida.save()
+        serializer = PremioPartidaSerializer(premio_partida)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def finalizar(self, request, pk=None):
         """Finaliza a partida"""

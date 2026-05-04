@@ -13,10 +13,10 @@ const config: CapacitorConfig = {
   },
   plugins: {
     StatusBar: {
-      // Conteúdo vai por baixo da status bar (remove a borda do topo)
       overlaysWebView: true,
       style: 'DARK',
       backgroundColor: '#020617',
+
     },
     SplashScreen: {
       launchShowDuration: 1500,
