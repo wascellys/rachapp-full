@@ -136,11 +136,13 @@ CSRF_TRUSTED_ORIGINS = [
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
+    database_is_private_railway = 'postgres.railway.internal' in DATABASE_URL
+
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
+            ssl_require=not database_is_private_railway,
         )
     }
 else:
