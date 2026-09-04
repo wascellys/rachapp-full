@@ -331,11 +331,7 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 # BASE_URL_IMAGES = MEDIA_URL if 'AWS_ACCESS_KEY_ID' in os.environ else f'{BASE_URL_SYSTEM}{MEDIA_URL}'
 
 # Email Configuration
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.resend.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
-EMAIL_USE_SSL = env_bool('EMAIL_USE_SSL', default=False)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='resend')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='rachas.email_backend.ResendEmailBackend')
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
+RESEND_TIMEOUT = config('RESEND_TIMEOUT', default=10, cast=int)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='RachApp <noreply@rachapp.com.br>')
