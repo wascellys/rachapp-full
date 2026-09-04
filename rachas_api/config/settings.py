@@ -19,16 +19,33 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def env_bool(name, default=False):
+    value = config(name, default=default)
+    if isinstance(value, bool):
+        return value
+
+    normalized = str(value).strip().lower()
+    if normalized in ('1', 'true', 'yes', 'on', 'dev', 'development'):
+        return True
+    if normalized in ('0', 'false', 'no', 'off', 'prod', 'production', 'release'):
+        return False
+
+    return default
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g8$0^3g*d%&k(3a5vah0s1j)4&5s7*tq*1emutl8db0-*2*u%i'
+SECRET_KEY = config(
+    'SECRET_KEY',
+    default='django-insecure-g8$0^3g*d%&k(3a5vah0s1j)4&5s7*tq*1emutl8db0-*2*u%i',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 
 
@@ -60,6 +77,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -115,19 +133,30 @@ CSRF_TRUSTED_ORIGINS = [
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-        'OPTIONS': {
-            'sslmode': 'require',
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            }
         }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -241,35 +270,46 @@ CORS_ALLOW_CREDENTIALS = True
 #         },
 #     },
 # }
-try:
-    from decouple import config
-except ImportError:
-    import os
-    config = os.environ.get
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-CLOUDFLARE_R2_CONFIG_OPTIONS = {
-    "bucket_name": config("CLOUDFLARE_R2_BUCKET"),
-    "default_acl": "public-read",  # or "private"
-    "signature_version": "s3v4",
-    "endpoint_url": config("CLOUDFLARE_R2_BUCKET_ENDPOINT"),
-    "access_key": config("CLOUDFLARE_R2_ACCESS_KEY"),
-    "secret_key": config("CLOUDFLARE_R2_SECRET_KEY"),
-}
+R2_BUCKET = config('CLOUDFLARE_R2_BUCKET', default=None)
+R2_ENDPOINT = config('CLOUDFLARE_R2_BUCKET_ENDPOINT', default=None)
+R2_ACCESS_KEY = config('CLOUDFLARE_R2_ACCESS_KEY', default=None)
+R2_SECRET_KEY = config('CLOUDFLARE_R2_SECRET_KEY', default=None)
+USE_R2_STORAGE = all([R2_BUCKET, R2_ENDPOINT, R2_ACCESS_KEY, R2_SECRET_KEY])
 
+if USE_R2_STORAGE:
+    CLOUDFLARE_R2_CONFIG_OPTIONS = {
+        'bucket_name': R2_BUCKET,
+        'default_acl': 'public-read',
+        'signature_version': 's3v4',
+        'endpoint_url': R2_ENDPOINT,
+        'access_key': R2_ACCESS_KEY,
+        'secret_key': R2_SECRET_KEY,
+    }
 
-STATIC_URL = 'static/'
-
-# Introduced in Django 4.2
-STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
-    },
-    "staticfiles": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
-    },
-}
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': CLOUDFLARE_R2_CONFIG_OPTIONS,
+        },
+        'staticfiles': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': CLOUDFLARE_R2_CONFIG_OPTIONS,
+        },
+    }
+else:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 SITE_ID = 1
 
