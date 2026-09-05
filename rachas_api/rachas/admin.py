@@ -1,5 +1,8 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.contrib.admin import RelatedOnlyFieldListFilter
+from django.contrib.auth.tokens import default_token_generator
+from allauth.account.internal.flows.password_reset import request_password_reset
 from .models import (
     User, Racha, JogadoresRacha, Premio, Partida,
     JogadorPartida, RegistroPartida, PremioPartida, SolicitacaoRacha
@@ -19,6 +22,7 @@ class UserAdmin(admin.ModelAdmin):
     )
     search_fields = ('username', 'email', 'first_name', 'last_name')
     readonly_fields = ('id', 'auth_uid', 'data_criacao')
+    actions = ['enviar_email_redefinicao_senha']
     
     fieldsets = (
         ('Informações Básicas', {
@@ -31,6 +35,38 @@ class UserAdmin(admin.ModelAdmin):
             'fields': ('auth_uid', 'id', 'data_criacao')
         }),
     )
+
+    def enviar_email_redefinicao_senha(self, request, queryset):
+        enviados = 0
+        ignorados = 0
+
+        for usuario in queryset:
+            if not usuario.email:
+                ignorados += 1
+                continue
+
+            request_password_reset(
+                request,
+                usuario.email,
+                [usuario],
+                default_token_generator,
+            )
+            enviados += 1
+
+        if enviados:
+            self.message_user(
+                request,
+                f"{enviados} e-mail(s) de redefinicao de senha enviado(s).",
+                messages.SUCCESS,
+            )
+        if ignorados:
+            self.message_user(
+                request,
+                f"{ignorados} usuario(s) ignorado(s) por nao terem e-mail cadastrado.",
+                messages.WARNING,
+            )
+
+    enviar_email_redefinicao_senha.short_description = "Enviar e-mail de redefinicao de senha"
 
 
 @admin.register(Racha)
