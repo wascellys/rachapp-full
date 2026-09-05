@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin import RelatedOnlyFieldListFilter
 from .models import (
     User, Racha, JogadoresRacha, Premio, Partida,
     JogadorPartida, RegistroPartida, PremioPartida, SolicitacaoRacha
@@ -8,7 +9,14 @@ from .models import (
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email', 'posicao', 'data_nascimento', 'data_criacao')
-    list_filter = ('posicao', 'data_criacao')
+    list_filter = (
+        'posicao',
+        'is_active',
+        'is_staff',
+        'is_superuser',
+        'date_joined',
+        'data_criacao',
+    )
     search_fields = ('username', 'email', 'first_name', 'last_name')
     readonly_fields = ('id', 'auth_uid', 'data_criacao')
     
@@ -28,9 +36,15 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(Racha)
 class RachaAdmin(admin.ModelAdmin):
     list_display = ('nome', 'codigo_convite', 'criado_em')
-    list_filter = ('criado_em',)
+    list_filter = (
+        ('administrador', RelatedOnlyFieldListFilter),
+        'data_inicio',
+        'data_encerramento',
+        'criado_em',
+    )
     search_fields = ('nome', 'codigo_convite')
     readonly_fields = ('id', 'codigo_convite', 'criado_em')
+    filter_horizontal = ('administrador',)
     
     fieldsets = (
         ('Informações Básicas', {
@@ -52,7 +66,12 @@ class RachaAdmin(admin.ModelAdmin):
 @admin.register(JogadoresRacha)
 class JogadoresRachaAdmin(admin.ModelAdmin):
     list_display = ('jogador', 'racha', 'ativo', 'data_entrada')
-    list_filter = ('ativo', 'racha', 'data_entrada')
+    list_filter = (
+        'ativo',
+        ('racha', RelatedOnlyFieldListFilter),
+        ('jogador', RelatedOnlyFieldListFilter),
+        'data_entrada',
+    )
     search_fields = ('jogador__username', 'racha__nome')
     readonly_fields = ('id', 'data_entrada')
 
@@ -60,15 +79,26 @@ class JogadoresRachaAdmin(admin.ModelAdmin):
 @admin.register(Premio)
 class PremioAdmin(admin.ModelAdmin):
     list_display = ('nome', 'racha', 'valor_pontos', 'ativo', 'criado_em')
-    list_filter = ('ativo', 'racha', 'criado_em')
+    list_filter = (
+        'ativo',
+        ('racha', RelatedOnlyFieldListFilter),
+        'valor_pontos',
+        'criado_em',
+    )
     search_fields = ('nome', 'racha__nome')
     readonly_fields = ('id', 'criado_em')
 
 
 @admin.register(Partida)
 class PartidaAdmin(admin.ModelAdmin):
-    list_display = ('racha', 'data_inicio', 'data_fim', 'criado_em')
-    list_filter = ('racha', 'criado_em', 'data_inicio')
+    list_display = ('racha', 'data_inicio', 'data_fim', 'status', 'local', 'criado_em')
+    list_filter = (
+        'status',
+        ('racha', RelatedOnlyFieldListFilter),
+        'data_inicio',
+        'data_fim',
+        'criado_em',
+    )
     search_fields = ('racha__nome',)
     readonly_fields = ('id', 'criado_em')
 
@@ -76,7 +106,12 @@ class PartidaAdmin(admin.ModelAdmin):
 @admin.register(JogadorPartida)
 class JogadorPartidaAdmin(admin.ModelAdmin):
     list_display = ('jogador', 'partida', 'presente')
-    list_filter = ('presente', 'partida__racha')
+    list_filter = (
+        'presente',
+        ('partida__racha', RelatedOnlyFieldListFilter),
+        ('partida', RelatedOnlyFieldListFilter),
+        ('jogador', RelatedOnlyFieldListFilter),
+    )
     search_fields = ('jogador__username', 'partida__racha__nome')
     readonly_fields = ('id',)
 
@@ -84,7 +119,13 @@ class JogadorPartidaAdmin(admin.ModelAdmin):
 @admin.register(RegistroPartida)
 class RegistroPartidaAdmin(admin.ModelAdmin):
     list_display = ('jogador_gol', 'jogador_assistencia', 'partida', 'criado_em')
-    list_filter = ('partida__racha', 'criado_em')
+    list_filter = (
+        ('partida__racha', RelatedOnlyFieldListFilter),
+        ('partida', RelatedOnlyFieldListFilter),
+        ('jogador_gol', RelatedOnlyFieldListFilter),
+        ('jogador_assistencia', RelatedOnlyFieldListFilter),
+        'criado_em',
+    )
     search_fields = ('jogador_gol__username', 'jogador_assistencia__username', 'partida__racha__nome')
     readonly_fields = ('id', 'criado_em')
 
@@ -92,7 +133,13 @@ class RegistroPartidaAdmin(admin.ModelAdmin):
 @admin.register(PremioPartida)
 class PremioPartidaAdmin(admin.ModelAdmin):
     list_display = ('premio', 'jogador', 'partida', 'criado_em')
-    list_filter = ('partida__racha', 'criado_em')
+    list_filter = (
+        ('partida__racha', RelatedOnlyFieldListFilter),
+        ('partida', RelatedOnlyFieldListFilter),
+        ('premio', RelatedOnlyFieldListFilter),
+        ('jogador', RelatedOnlyFieldListFilter),
+        'criado_em',
+    )
     search_fields = ('premio__nome', 'jogador__username', 'partida__racha__nome')
     readonly_fields = ('id', 'criado_em')
 
@@ -100,7 +147,12 @@ class PremioPartidaAdmin(admin.ModelAdmin):
 @admin.register(SolicitacaoRacha)
 class SolicitacaoRachaAdmin(admin.ModelAdmin):
     list_display = ('jogador', 'racha', 'status', 'criado_em')
-    list_filter = ('status', 'racha', 'criado_em')
+    list_filter = (
+        'status',
+        ('racha', RelatedOnlyFieldListFilter),
+        ('jogador', RelatedOnlyFieldListFilter),
+        'criado_em',
+    )
     search_fields = ('jogador__username', 'racha__nome')
     readonly_fields = ('id', 'criado_em')
     
