@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin import RelatedOnlyFieldListFilter
 from django.contrib.auth.tokens import default_token_generator
-from allauth.account.internal.flows.password_reset import request_password_reset
+from django.conf import settings
+from allauth.account.adapter import get_adapter
+from allauth.account.utils import user_pk_to_url_str
 from .models import (
     User, Racha, JogadoresRacha, Premio, Partida,
     JogadorPartida, RegistroPartida, PremioPartida, SolicitacaoRacha
@@ -45,11 +47,22 @@ class UserAdmin(admin.ModelAdmin):
                 ignorados += 1
                 continue
 
-            request_password_reset(
-                request,
+            uid = user_pk_to_url_str(usuario)
+            key = default_token_generator.make_token(usuario)
+            frontend_url = settings.FRONTEND_URL.rstrip('/')
+            reset_url = f"{frontend_url}/redefinir-senha/{uid}/{key}"
+            context = {
+                'user': usuario,
+                'uid': uid,
+                'key': key,
+                'password_reset_url': reset_url,
+                'request': request,
+            }
+
+            get_adapter(request).send_password_reset_mail(
+                usuario,
                 usuario.email,
-                [usuario],
-                default_token_generator,
+                context,
             )
             enviados += 1
 
