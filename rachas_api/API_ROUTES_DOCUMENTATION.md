@@ -1663,3 +1663,33 @@ O token expira em **24 horas**. Use o refresh token para obter um novo access to
 ---
 
 Documento gerado para integração com UX/UI Design
+
+---
+
+## Rede social (`/api/v1/social/`)
+
+Todas as rotas exigem login. Nada aqui altera ranking ou pontuação dos rachas.
+
+**Visibilidade:** um post é visto pelo autor, por todos se `PUBLICO`, e só pelos amigos se `AMIGOS`. Post invisível responde **404**.
+
+| Método e rota | O que faz |
+|---|---|
+| `GET /posts/?feed=amigos` | Feed com os seus posts e os dos amigos (padrão). Paginado: `?page=`, `?tamanho=` (até 30) |
+| `GET /posts/?feed=explorar` | Posts públicos de todos os rachas |
+| `GET /posts/?feed=reels` | Só reels visíveis para você |
+| `GET /posts/?autor=<username>[&formato=POST\|REEL]` | Posts de um perfil (respeita a visibilidade) |
+| `POST /posts/` | Multipart: `texto`, `midia` (imagem até 10 MB ou vídeo até 50 MB), `formato` (`POST`/`REEL`, reel exige vídeo), `visibilidade` (`PUBLICO`/`AMIGOS`). `@usuario` no texto marca e notifica |
+| `GET /posts/{id}/` · `DELETE /posts/{id}/` | Detalhe · apagar (só o autor, **403** para os demais) |
+| `POST /posts/{id}/curtir/` · `DELETE /posts/{id}/curtir/` | Curtir/descurtir → `{curtido, total_curtidas}` |
+| `GET /posts/{id}/comentarios/` · `POST /posts/{id}/comentarios/` | Listar · comentar `{texto}` (aceita `@usuario`) |
+| `DELETE /comentarios/{id}/` | Autor do comentário ou do post |
+| `POST /posts/{id}/compartilhar/` | `{texto, visibilidade}`; só posts públicos; aponta sempre para o original |
+| `GET /usuarios/?q=` | Busca em todos os rachas por nome ou @usuario, com `amizade` (`eu`, `amigos`, `enviada`, `recebida`, `nenhuma`). Sem `q`: sugestões de colegas de racha |
+| `GET /perfis/{username}/` | Perfil com `estatisticas` (gols, assistências, jogos, rachas, prêmios de todos os rachas), `social` (amigos, posts, reels) e situação da amizade |
+| `GET /amizades/` | `{amigos, recebidas, enviadas}` |
+| `POST /amizades/` | `{usuario_id}` envia pedido; se o outro já tinha pedido, vira amizade |
+| `POST /amizades/{id}/aceitar/` · `DELETE /amizades/{id}/` | Aceitar (só quem recebeu) · recusar, cancelar ou desfazer |
+| `GET /notificacoes/` · `POST /notificacoes/ler/` | 50 mais recentes + `nao_lidas` · marcar todas como lidas |
+| `GET /resumo/` | `{notificacoes_nao_lidas, pedidos_amizade}` para os selos do menu |
+
+Tipos de notificação: `CURTIDA`, `COMENTARIO`, `MENCAO`, `COMPARTILHAMENTO`, `AMIZADE_PEDIDO`, `AMIZADE_ACEITA`.

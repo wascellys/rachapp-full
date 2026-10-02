@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     'storages',
     
     'rachas',
+    'social',
 ]
 
 MIDDLEWARE = [
