@@ -79,10 +79,10 @@ export default function Dashboard() {
           <div className="rounded-3xl bg-[#07130a] px-6 pb-3 pt-6">
             <PlayerCard {...carta} />
           </div>
-          <div className="flex-1 space-y-4 text-center md:text-left">
+          <div className="w-full min-w-0 flex-1 space-y-4 text-center md:text-left">
             <div>
               <p className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">Meu desempenho</p>
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">{stats.nome}</h1>
+              <h1 className="truncate text-3xl font-black tracking-tight md:text-4xl" title={stats.nome}>{stats.nome}</h1>
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:justify-start">
                 <Badge variant="outline">{posicaoLabel(stats.posicao)}</Badge>
                 <Badge variant="gold">Carta {TIER_THEME[rating.tier].label} · OVR {rating.overall}</Badge>
@@ -151,8 +151,8 @@ export default function Dashboard() {
               <AvatarImage src={stats.melhor_garcom.imagem_perfil || undefined} className="object-cover" />
               <AvatarFallback className="text-2xl font-black">{iniciais(stats.melhor_garcom.nome)}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 text-center sm:text-left">
-              <p className="text-2xl font-black">{stats.melhor_garcom.nome}</p>
+            <div className="w-full min-w-0 flex-1 text-center sm:text-left">
+              <p className="truncate text-2xl font-black" title={stats.melhor_garcom.nome}>{stats.melhor_garcom.nome}</p>
               <p className="text-muted-foreground">
                 Te deu <strong className="text-foreground">{stats.melhor_garcom.assistencias}</strong>{" "}
                 {stats.melhor_garcom.assistencias === 1 ? "assistência" : "assistências"} para gol.

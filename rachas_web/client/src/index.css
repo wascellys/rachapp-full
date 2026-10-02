@@ -313,7 +313,7 @@
 @layer components {
   /* Cartão de estatística (KPI) */
   .stat-tile {
-    @apply rounded-2xl border-2 border-border bg-card p-4 flex flex-col gap-1;
+    @apply rounded-2xl border-2 border-border bg-card p-4 flex flex-col gap-1 min-w-0;
     box-shadow: var(--shadow-card);
   }
 

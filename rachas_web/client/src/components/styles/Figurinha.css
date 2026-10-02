@@ -1,0 +1,314 @@
+/* Figurinha do álbum. A largura vem de --fig-w (padrão 120px); a altura segue a proporção 3:4. */
+.fig {
+  --fig-w: 120px;
+  position: relative;
+  width: var(--fig-w);
+  aspect-ratio: 3 / 4;
+  border-radius: calc(var(--fig-w) * 0.09);
+  padding: calc(var(--fig-w) * 0.035);
+  font-family: "Barlow Condensed", "Nunito", "Arial Narrow", sans-serif;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.fig-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--fig-w) * 0.065);
+}
+
+.fig-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(var(--fig-w) * 0.05) calc(var(--fig-w) * 0.06) 0;
+  font-weight: 800;
+  font-size: calc(var(--fig-w) * 0.1);
+  line-height: 1;
+}
+
+.fig-num {
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.fig-pos {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.fig-photo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.fig-photo img {
+  position: absolute;
+  inset: 4% 8% 0;
+  width: 84%;
+  height: 96%;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: calc(var(--fig-w) * 0.05) calc(var(--fig-w) * 0.05) 0 0;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+}
+
+.fig-initials {
+  align-self: center;
+  font-size: calc(var(--fig-w) * 0.32);
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+.fig-bottom {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 0 calc(var(--fig-w) * 0.06) calc(var(--fig-w) * 0.05);
+  text-align: center;
+  line-height: 1.05;
+}
+
+.fig-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 800;
+  font-size: calc(var(--fig-w) * 0.125);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.fig-tier {
+  font-weight: 800;
+  font-size: calc(var(--fig-w) * 0.085);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.fig-foil {
+  position: absolute;
+  inset: -40%;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background: linear-gradient(115deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.55) 47%,
+      rgba(186, 230, 253, 0.45) 50%,
+      rgba(244, 114, 182, 0.35) 53%,
+      transparent 60%);
+  animation: fig-foil 4.5s ease-in-out infinite;
+}
+
+@keyframes fig-foil {
+  0% { transform: translateX(-45%); }
+  55%, 100% { transform: translateX(45%); }
+}
+
+.fig-badge {
+  position: absolute;
+  top: calc(var(--fig-w) * -0.06);
+  right: calc(var(--fig-w) * -0.06);
+  z-index: 5;
+  min-width: 1.6rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  border: 2px solid var(--card);
+  background: var(--foreground);
+  color: var(--background);
+  font-family: "Nunito", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.fig-badge-nova {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  animation: fig-pop 0.4s cubic-bezier(.2, 1.6, .4, 1) both;
+}
+
+/* Pronta para colar: brilho pulsante e chamada */
+.fig-pendente {
+  cursor: pointer;
+  animation: fig-pulse 1.6s ease-in-out infinite;
+}
+
+.fig-colar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--fig-w) * -0.07);
+  z-index: 5;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-family: "Nunito", sans-serif;
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+@keyframes fig-pulse {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-3px) rotate(1.5deg); }
+}
+
+@keyframes fig-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Página do álbum: 4 figurinhas dividem a largura disponível */
+.album-slots {
+  container-type: inline-size;
+}
+
+.album-slots .fig {
+  --fig-w: calc((100cqi - 3 * 0.5rem) / 4);
+}
+
+/* Espaço vazio no álbum */
+.fig-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--fig-w) * 0.07);
+  border: 2px dashed var(--border);
+  background: color-mix(in oklch, var(--muted) 55%, transparent);
+  color: var(--muted-foreground);
+}
+
+.fig-vazia-num {
+  font-weight: 900;
+  font-size: calc(var(--fig-w) * 0.16);
+  font-variant-numeric: tabular-nums;
+}
+
+.fig-vazia-silhueta {
+  width: 45%;
+  fill: currentColor;
+  opacity: 0.25;
+}
+
+.fig-vazia-raridade {
+  font-weight: 800;
+  font-size: calc(var(--fig-w) * 0.09);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Abertura do pacote: cada figurinha vira ao ser revelada */
+.fig-reveal {
+  perspective: 900px;
+}
+
+.fig-reveal-inner {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(.2, .8, .2, 1);
+}
+
+.fig-reveal.virada .fig-reveal-inner {
+  transform: rotateY(180deg);
+}
+
+.fig-reveal-verso,
+.fig-reveal-frente {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.fig-reveal-frente {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+.fig-verso {
+  width: var(--fig-w, 120px);
+  aspect-ratio: 3 / 4;
+  border-radius: calc(var(--fig-w, 120px) * 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 6px, transparent 6px 12px),
+    linear-gradient(160deg, #15803d, #052e16);
+  border: 3px solid #4ade80;
+  color: #dcfce7;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 900;
+  font-size: calc(var(--fig-w, 120px) * 0.2);
+  letter-spacing: 0.04em;
+}
+
+/* Pacote fechado */
+.pacote {
+  position: relative;
+  width: 150px;
+  height: 200px;
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 8px, transparent 8px 16px),
+    linear-gradient(160deg, #22c55e, #14532d 70%);
+  border: 3px solid #86efac;
+  box-shadow: 0 20px 40px -14px rgba(22, 163, 74, 0.7);
+  color: #f0fdf4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-family: "Barlow Condensed", sans-serif;
+  text-transform: uppercase;
+  transition: transform 0.2s ease;
+}
+
+.pacote::before {
+  content: "";
+  position: absolute;
+  inset: 10px 0 auto;
+  height: 6px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 6px, transparent 6px 10px);
+}
+
+.pacote-tremendo {
+  animation: pacote-tremer 0.5s ease-in-out infinite;
+}
+
+@keyframes pacote-tremer {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-4deg) scale(1.03); }
+  75% { transform: rotate(4deg) scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-foil,
+  .fig-pendente,
+  .pacote-tremendo,
+  .fig-badge-nova {
+    animation: none;
+  }
+  .fig-reveal-inner {
+    transition: none;
+  }
+}

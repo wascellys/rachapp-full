@@ -38,8 +38,8 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <p className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-extrabold uppercase tracking-wider text-muted-foreground">
             Olá, {user?.first_name || user?.username} 👋
           </p>
           <h1 className="text-3xl font-black tracking-tight">Meus Rachas</h1>
@@ -86,14 +86,14 @@ export default function Home() {
                     <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-xl text-primary">
                       <FaFutbol aria-hidden />
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
                       {racha.is_admin && <Badge variant="gold">Admin</Badge>}
                       <Badge variant="outline" className="font-mono tracking-widest">{racha.codigo_convite}</Badge>
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-lg font-black transition-colors group-hover:text-primary">{racha.nome}</h2>
-                    {racha.descricao && <p className="line-clamp-2 text-sm text-muted-foreground">{racha.descricao}</p>}
+                    <h2 className="truncate text-lg font-black transition-colors group-hover:text-primary" title={racha.nome}>{racha.nome}</h2>
+                    {racha.descricao && <p className="line-clamp-2 break-words text-sm text-muted-foreground">{racha.descricao}</p>}
                   </div>
                   <div className="flex items-center justify-between text-sm font-bold text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">

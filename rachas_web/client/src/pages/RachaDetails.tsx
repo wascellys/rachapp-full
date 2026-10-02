@@ -19,6 +19,7 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaMapMarkerAlt,
+  FaLayerGroup,
 } from "react-icons/fa";
 import { TbEdit, TbTrash, TbSettings } from "react-icons/tb";
 import { PlayerCardModal } from "@/components/PlayerCardModal";
@@ -58,6 +59,7 @@ interface RachaDetailsData {
   ponto_assistencia: number;
   ponto_presenca: number;
   premios: Premio[];
+  album?: { existe: boolean; pacotes_fechados: number; para_colar: number } | null;
 }
 
 interface RankingItem {
@@ -307,11 +309,11 @@ export default function RachaDetails() {
         <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-primary/10 blur-2xl" />
         <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight md:text-3xl">{racha.nome}</h1>
-              {racha.is_admin && <Badge variant="gold">Admin</Badge>}
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-2xl font-black tracking-tight md:text-3xl" title={racha.nome}>{racha.nome}</h1>
+              {racha.is_admin && <Badge variant="gold" className="shrink-0">Admin</Badge>}
             </div>
-            {racha.descricao && <p className="max-w-xl text-sm text-muted-foreground">{racha.descricao}</p>}
+            {racha.descricao && <p className="line-clamp-2 max-w-xl break-words text-sm text-muted-foreground" title={racha.descricao}>{racha.descricao}</p>}
             <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><FaUsers aria-hidden /> {racha.total_jogadores} jogadores</span>
               <span aria-hidden className="hidden sm:inline">•</span>
@@ -325,8 +327,24 @@ export default function RachaDetails() {
               {racha.codigo_convite} <FaCopy className="text-xs" aria-hidden />
             </button>
           </div>
-          {racha.is_admin && (
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            {(racha.album?.existe || racha.is_admin) && (
+              <Link href={`/racha/${id}/album`}>
+                <Button variant="outline" className="relative">
+                  <FaLayerGroup /> Álbum
+                  {(racha.album?.pacotes_fechados ?? 0) > 0 && (
+                    <span
+                      className="absolute -right-2 -top-2 flex min-w-6 items-center justify-center rounded-full border-2 border-card bg-gold px-1.5 text-xs font-black text-black"
+                      aria-label={`${racha.album!.pacotes_fechados} pacotes para abrir`}
+                    >
+                      {racha.album!.pacotes_fechados}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
+            {racha.is_admin && (
+              <>
               <Link href={`/racha/${id}/editar`}>
                 <Button variant="outline">
                   <TbSettings /> Configurar
@@ -337,8 +355,9 @@ export default function RachaDetails() {
                   <FaFlagCheckered /> Nova Partida
                 </Button>
               </Link>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </section>
 
@@ -374,7 +393,7 @@ export default function RachaDetails() {
                       wrap={(item, node) => {
                         const info = rankingPorId.get(item.id);
                         return (
-                          <PlayerCardModal rachaName={racha.nome} player={cartaDoRanking(info?.item, null, info?.pos)}>
+                          <PlayerCardModal rachaName={racha.nome} player={cartaDoRanking(info?.item, null, info?.pos)} className="w-full min-w-0">
                             {node}
                           </PlayerCardModal>
                         );
@@ -417,7 +436,7 @@ export default function RachaDetails() {
                                 {index + 1}
                               </span>
                             </td>
-                            <td className="py-3">
+                            <td className="w-full max-w-0 py-3">
                               <PlayerCardModal rachaName={racha.nome} player={cartaDoRanking(item, null, index + 1)}>
                                 <div className="flex items-center gap-3 pr-2">
                                   <Avatar className="size-10 shrink-0 rounded-full border-2 border-border bg-muted">
@@ -427,8 +446,8 @@ export default function RachaDetails() {
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="min-w-0">
-                                    <p className="truncate font-bold">{item.jogador_nome}</p>
-                                    <p className="text-xs font-semibold text-muted-foreground">
+                                    <p className="truncate font-bold" title={item.jogador_nome}>{item.jogador_nome}</p>
+                                    <p className="truncate text-xs font-semibold text-muted-foreground">
                                       <span className="sm:hidden">{item.presencas}J · {item.gols}G · {item.assistencias}A</span>
                                       <span className="hidden sm:inline">{posicaoLabel(item.posicao)}</span>
                                     </p>
@@ -551,7 +570,7 @@ export default function RachaDetails() {
                 return (
                   <Card key={partida.id} className="transition-colors hover:border-primary/50">
                     <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 items-center gap-4">
                         <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-muted leading-none">
                           <span className="text-xl font-black tabular-nums">{quando ? quando.getDate().toString().padStart(2, "0") : "—"}</span>
                           <span className="text-[10px] font-extrabold uppercase text-muted-foreground">
@@ -560,21 +579,21 @@ export default function RachaDetails() {
                         </div>
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-extrabold">{formatarData(quando, { weekday: "long", day: "2-digit", month: "long", year: undefined })}</span>
+                            <span className="truncate font-extrabold">{formatarData(quando, { weekday: "long", day: "2-digit", month: "long", year: undefined })}</span>
                             {partida.status ? (
                               <Badge variant="live"><span className="size-1.5 animate-pulse rounded-full bg-success" /> Em andamento</Badge>
                             ) : (
                               <Badge variant="muted">Encerrada</Badge>
                             )}
                           </div>
-                          <p className="flex flex-wrap gap-x-3 text-xs font-semibold text-muted-foreground">
+                          <p className="flex min-w-0 flex-wrap gap-x-3 text-xs font-semibold text-muted-foreground">
                             {(partida.horario || quando) && <span>{partida.horario || formatarHora(quando)}</span>}
-                            {partida.local && <span className="inline-flex items-center gap-1"><FaMapMarkerAlt aria-hidden /> {partida.local}</span>}
+                            {partida.local && <span className="inline-flex min-w-0 max-w-full items-center gap-1" title={partida.local}><FaMapMarkerAlt className="shrink-0" aria-hidden /> <span className="truncate">{partida.local}</span></span>}
                             {stats && <span>{stats.gols} gols · {stats.presentes} presentes</span>}
                           </p>
                         </div>
                       </div>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex shrink-0 justify-end gap-2">
                         <Link href={`/partida/${partida.id}/timeline`}>
                           <Button variant="ghost" size="sm"><FaHistory /> Lances</Button>
                         </Link>
@@ -607,22 +626,22 @@ export default function RachaDetails() {
                       return (
                         <Card key={item.id} className={item.ativo ? "" : "opacity-70"}>
                           <CardContent className="flex items-center gap-3 p-4">
-                            <PlayerCardModal rachaName={racha.nome} player={cartaDoRanking(info?.item, item.jogador, info?.pos)}>
+                            <PlayerCardModal rachaName={racha.nome} player={cartaDoRanking(info?.item, item.jogador, info?.pos)} className="min-w-0 flex-1">
                               <div className="flex min-w-0 items-center gap-3">
                                 <Avatar className="size-12 shrink-0 rounded-full border-2 border-border">
                                   <AvatarImage src={item.jogador.imagem_perfil || undefined} className="object-cover" />
                                   <AvatarFallback className="bg-muted font-black">{iniciais(nomeCompleto(item.jogador))}</AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">
-                                  <p className="truncate font-bold">{nomeCompleto(item.jogador)}</p>
-                                  <p className="text-xs font-semibold text-muted-foreground">
+                                  <p className="truncate font-bold" title={nomeCompleto(item.jogador)}>{nomeCompleto(item.jogador)}</p>
+                                  <p className="truncate text-xs font-semibold text-muted-foreground">
                                     {posicaoLabel(item.jogador.posicao)} · desde {formatarData(item.data_entrada)}
                                   </p>
                                 </div>
                               </div>
                             </PlayerCardModal>
                             {racha.is_admin && (
-                              <div className="ml-auto flex flex-col items-center gap-1">
+                              <div className="ml-auto flex shrink-0 flex-col items-center gap-1">
                                 <Switch
                                   checked={item.ativo}
                                   onCheckedChange={() => handleToggleStatus(item)}
@@ -674,12 +693,12 @@ export default function RachaDetails() {
                         <FaTrophy aria-hidden />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-bold">{premio.nome}</p>
+                        <p className="truncate font-bold" title={premio.nome}>{premio.nome}</p>
                         <p className="text-sm font-semibold text-muted-foreground">+{premio.valor_pontos} pontos</p>
                       </div>
                     </div>
                     {racha.is_admin && (
-                      <div className="flex gap-1">
+                      <div className="flex shrink-0 gap-1">
                         <Button variant="ghost" size="icon-sm" aria-label={`Editar ${premio.nome}`} onClick={() => { setEditingPremio(premio); setPremioModalOpen(true); }}>
                           <TbEdit />
                         </Button>

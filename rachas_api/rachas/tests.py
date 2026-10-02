@@ -579,3 +579,127 @@ class RecuperacaoSenhaTests(APITestCase):
             'new_password1': 'NovaSenha#2026', 'new_password2': 'NovaSenha#2026',
         }, format='json')
         self.assertEqual(confirm.status_code, status.HTTP_200_OK, confirm.data)
+
+
+# ─── Álbum de figurinhas ────────────────────────────────────────────────────
+
+from django.db.models import Sum  # noqa: E402
+from .models import Album, PaginaAlbum, Figurinha, Pacote, FigurinhaJogador  # noqa: E402
+
+
+class AlbumTests(BaseRachaTestCase):
+    def url(self, sufixo=''):
+        return f'/api/v1/rachas/{self.racha.id}/album/{sufixo}'
+
+    def gerar_album(self, **dados):
+        return self.como(self.admin).post(self.url(), dados, format='json')
+
+    def test_sem_album_retorna_existe_false(self):
+        res = self.como(self.jogador).get(self.url())
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(res.data['existe'])
+
+    def test_estranho_nao_ve_album(self):
+        self.gerar_album()
+        self.assertEqual(self.como(self.estranho).get(self.url()).status_code, 404)
+
+    def test_jogador_nao_gera_album(self):
+        res = self.como(self.jogador).post(self.url(), {}, format='json')
+        self.assertEqual(res.status_code, 403)
+
+    def test_gerar_album_cria_paginas_para_membros_ativos(self):
+        res = self.gerar_album(pesos={'bronze': 50, 'lenda': 5})
+        self.assertEqual(res.status_code, 201, res.data)
+        album = Album.objects.get(racha=self.racha)
+        self.assertEqual(album.peso_bronze, 50)
+        self.assertEqual(album.peso_lenda, 5)
+        self.assertEqual(album.paginas.count(), 2)
+        self.assertEqual(Figurinha.objects.filter(pagina__album=album).count(), 8)
+        numeros = sorted(Figurinha.objects.values_list('numero', flat=True))
+        self.assertEqual(numeros, list(range(1, 9)))
+        self.assertEqual(self.gerar_album().status_code, 400)
+
+    def test_pesos_todos_zero_sao_rejeitados(self):
+        res = self.gerar_album(pesos={'bronze': 0, 'prata': 0, 'ouro': 0, 'lenda': 0})
+        self.assertEqual(res.status_code, 400)
+
+    def test_gerar_paginas_para_novo_membro(self):
+        self.gerar_album()
+        novo = criar_usuario('novato')
+        JogadoresRacha.objects.create(racha=self.racha, jogador=novo)
+        painel = self.como(self.admin).get(self.url('painel/'))
+        self.assertEqual([m['username'] for m in painel.data['sem_pagina']], ['novato'])
+        res = self.como(self.admin).post(self.url('paginas/'), {'jogadores_ids': [str(novo.id)]}, format='json')
+        self.assertEqual(res.status_code, 201, res.data)
+        pagina = PaginaAlbum.objects.get(jogador=novo)
+        self.assertEqual(pagina.numero, 3)
+        self.assertEqual(self.como(self.admin).post(self.url('paginas/'), {}, format='json').status_code, 400)
+
+    def test_distribuir_abrir_e_colar(self):
+        self.gerar_album()
+        res = self.como(self.admin).post(self.url('pacotes/'), {
+            'todos': True, 'pacotes_por_jogador': 2, 'figurinhas_por_pacote': 6, 'motivo': 'Rodada 1',
+        }, format='json')
+        self.assertEqual(res.status_code, 201, res.data)
+        self.assertEqual(res.data['pacotes'], 4)
+        self.assertEqual(Pacote.objects.filter(dono=self.jogador).count(), 2)
+
+        cliente = self.como(self.jogador)
+        detalhe = cliente.get(self.url())
+        self.assertEqual(len(detalhe.data['pacotes_fechados']), 2)
+
+        aberto = cliente.post(self.url('abrir/'), {}, format='json')
+        self.assertEqual(aberto.status_code, 200, aberto.data)
+        self.assertEqual(len(aberto.data['figurinhas']), 6)
+        self.assertEqual(aberto.data['restantes'], 1)
+        total = FigurinhaJogador.objects.filter(dono=self.jogador).aggregate(n=Sum('quantidade'))['n']
+        self.assertEqual(total, 6)
+        novas = sum(1 for f in aberto.data['figurinhas'] if f['nova'])
+        self.assertEqual(novas, FigurinhaJogador.objects.filter(dono=self.jogador).count())
+
+        colar = cliente.post(self.url('colar/'), {}, format='json')
+        self.assertEqual(colar.data['coladas'], novas)
+        self.assertEqual(colar.data['progresso']['coladas'], novas)
+        self.assertEqual(colar.data['progresso']['repetidas'], 6 - novas)
+
+        cliente.post(self.url('abrir/'), {}, format='json')
+        self.assertEqual(cliente.post(self.url('abrir/'), {}, format='json').status_code, 400)
+
+    def test_nao_abre_pacote_de_outro(self):
+        self.gerar_album()
+        self.como(self.admin).post(self.url('pacotes/'), {'jogadores_ids': [str(self.admin.id)]}, format='json')
+        pacote = Pacote.objects.get(dono=self.admin)
+        res = self.como(self.jogador).post(self.url('abrir/'), {'pacote_id': str(pacote.id)}, format='json')
+        self.assertEqual(res.status_code, 400)
+        pacote.refresh_from_db()
+        self.assertIsNone(pacote.aberto_em)
+
+    def test_pacotes_so_para_membros_ativos(self):
+        self.gerar_album()
+        res = self.como(self.admin).post(self.url('pacotes/'), {'jogadores_ids': [str(self.estranho.id)]}, format='json')
+        self.assertEqual(res.status_code, 400)
+        JogadoresRacha.objects.filter(jogador=self.jogador).update(ativo=False)
+        res = self.como(self.admin).post(self.url('pacotes/'), {'todos': True}, format='json')
+        self.assertEqual(res.data['destinatarios'], 1)
+
+    def test_limites_do_pacote(self):
+        self.gerar_album()
+        for dados in ({'todos': True, 'figurinhas_por_pacote': 0}, {'todos': True, 'pacotes_por_jogador': 99}):
+            self.assertEqual(self.como(self.admin).post(self.url('pacotes/'), dados, format='json').status_code, 400)
+        self.assertEqual(self.como(self.jogador).post(self.url('pacotes/'), {'todos': True}, format='json').status_code, 403)
+
+    def test_sorteio_respeita_pesos_zerados(self):
+        self.gerar_album(pesos={'bronze': 0, 'prata': 0, 'ouro': 0, 'lenda': 1})
+        self.como(self.admin).post(self.url('pacotes/'), {'jogadores_ids': [str(self.jogador.id)], 'figurinhas_por_pacote': 20}, format='json')
+        res = self.como(self.jogador).post(self.url('abrir/'), {}, format='json')
+        self.assertEqual({f['raridade'] for f in res.data['figurinhas']}, {'LENDA'})
+
+    def test_resumo_no_detalhe_do_racha_e_ranking_intacto(self):
+        ranking_antes = self.como(self.jogador).get(f'/api/v1/rachas/{self.racha.id}/ranking/').data
+        self.gerar_album()
+        self.como(self.admin).post(self.url('pacotes/'), {'todos': True}, format='json')
+        res = self.como(self.jogador).get(f'/api/v1/rachas/{self.racha.id}/')
+        self.assertEqual(res.data['album'], {'existe': True, 'pacotes_fechados': 1, 'para_colar': 0})
+        self.como(self.jogador).post(self.url('abrir/'), {}, format='json')
+        ranking_depois = self.como(self.jogador).get(f'/api/v1/rachas/{self.racha.id}/ranking/').data
+        self.assertEqual(ranking_antes, ranking_depois)

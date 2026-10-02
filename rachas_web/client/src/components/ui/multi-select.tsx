@@ -66,8 +66,8 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Seleci
                     {selected.map((value) => {
                         const option = options.find((o) => o.value === value);
                         return (
-                            <Badge key={value} variant="secondary">
-                                {option ? option.label : value}
+                            <Badge key={value} variant="secondary" className="max-w-full" title={option ? option.label : value}>
+                                <span className="truncate">{option ? option.label : value}</span>
                                 <button
                                     className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                                     onKeyDown={(e) => {
@@ -94,7 +94,7 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Seleci
                         onBlur={() => setOpen(false)}
                         onFocus={() => setOpen(true)}
                         placeholder={placeholder}
-                        className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
+                        className="ml-2 min-w-24 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
                     />
                 </div>
             </div>
@@ -115,8 +115,9 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Seleci
                                             onChange((prev) => [...prev, option.value]);
                                         }}
                                         className="cursor-pointer"
+                                        title={option.label}
                                     >
-                                        {option.label}
+                                        <span className="truncate">{option.label}</span>
                                     </CommandItem>
                                 ))}
                             </CommandGroup>

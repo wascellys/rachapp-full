@@ -240,3 +240,147 @@ class SolicitacaoRacha(models.Model):
     
     def __str__(self):
         return f"{self.jogador.get_full_name()} - {self.racha.nome} ({self.status})"
+
+
+# ─── Álbum de figurinhas ────────────────────────────────────────────────────
+# Totalmente separado do ranking: nada aqui altera pontuação ou classificação.
+
+RARIDADES = [
+    ('BRONZE', 'Bronze'),
+    ('PRATA', 'Prata'),
+    ('OURO', 'Ouro'),
+    ('LENDA', 'Lenda'),
+]
+ORDEM_RARIDADES = [codigo for codigo, _ in RARIDADES]
+
+
+class Album(models.Model):
+    """Álbum de figurinhas de um racha. Os pesos definem a chance de cada raridade sair no pacote."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    racha = models.OneToOneField(Racha, on_delete=models.CASCADE, related_name='album')
+    titulo = models.CharField(max_length=120, blank=True)
+    peso_bronze = models.PositiveIntegerField(default=60)
+    peso_prata = models.PositiveIntegerField(default=28)
+    peso_ouro = models.PositiveIntegerField(default=10)
+    peso_lenda = models.PositiveIntegerField(default=2)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'albuns'
+        verbose_name = 'Álbum'
+        verbose_name_plural = 'Álbuns'
+
+    def __str__(self):
+        return self.titulo or f"Álbum {self.racha.nome}"
+
+    def pesos(self):
+        return {
+            'BRONZE': self.peso_bronze,
+            'PRATA': self.peso_prata,
+            'OURO': self.peso_ouro,
+            'LENDA': self.peso_lenda,
+        }
+
+
+class PaginaAlbum(models.Model):
+    """Página de um jogador no álbum, com uma figurinha de cada raridade."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name='paginas')
+    jogador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='paginas_album')
+    numero = models.PositiveIntegerField()
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'paginas_album'
+        unique_together = ('album', 'jogador')
+        ordering = ['numero']
+        verbose_name = 'Página do Álbum'
+        verbose_name_plural = 'Páginas do Álbum'
+
+    def __str__(self):
+        return f"#{self.numero} {self.jogador} ({self.album})"
+
+
+class Figurinha(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    pagina = models.ForeignKey(PaginaAlbum, on_delete=models.CASCADE, related_name='figurinhas')
+    raridade = models.CharField(max_length=10, choices=RARIDADES)
+    numero = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = 'figurinhas'
+        unique_together = ('pagina', 'raridade')
+        ordering = ['numero']
+        verbose_name = 'Figurinha'
+        verbose_name_plural = 'Figurinhas'
+
+    def __str__(self):
+        return f"#{self.numero} {self.pagina.jogador} - {self.get_raridade_display()}"
+
+
+class EnvioPacotes(models.Model):
+    """Registro de uma distribuição de pacotes feita por um administrador."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name='envios')
+    enviado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+    motivo = models.CharField(max_length=120, blank=True)
+    pacotes_por_jogador = models.PositiveSmallIntegerField()
+    figurinhas_por_pacote = models.PositiveSmallIntegerField()
+    total_destinatarios = models.PositiveIntegerField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'envios_pacotes'
+        ordering = ['-criado_em']
+        verbose_name = 'Envio de Pacotes'
+        verbose_name_plural = 'Envios de Pacotes'
+
+    def __str__(self):
+        return f"{self.motivo or 'Envio'} - {self.criado_em:%d/%m/%Y}"
+
+
+class Pacote(models.Model):
+    """Pacote de figurinhas de um jogador. O conteúdo é sorteado no servidor ao abrir."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name='pacotes')
+    envio = models.ForeignKey(EnvioPacotes, on_delete=models.SET_NULL, null=True, blank=True, related_name='pacotes')
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pacotes_figurinhas')
+    quantidade_figurinhas = models.PositiveSmallIntegerField()
+    motivo = models.CharField(max_length=120, blank=True)
+    conteudo = models.JSONField(default=list, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    aberto_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'pacotes'
+        ordering = ['criado_em']
+        verbose_name = 'Pacote'
+        verbose_name_plural = 'Pacotes'
+
+    def __str__(self):
+        return f"Pacote de {self.dono} ({'aberto' if self.aberto_em else 'fechado'})"
+
+
+class FigurinhaJogador(models.Model):
+    """Figurinhas que um jogador possui. `colada` indica se já está no álbum; o excedente são repetidas."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dono = models.ForeignKey(User, on_delete=models.CASCADE, related_name='figurinhas')
+    figurinha = models.ForeignKey(Figurinha, on_delete=models.CASCADE, related_name='colecoes')
+    quantidade = models.PositiveIntegerField(default=0)
+    colada = models.BooleanField(default=False)
+    obtida_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'figurinhas_jogador'
+        unique_together = ('dono', 'figurinha')
+        verbose_name = 'Figurinha do Jogador'
+        verbose_name_plural = 'Figurinhas dos Jogadores'
+
+    def __str__(self):
+        return f"{self.dono} - {self.figurinha} x{self.quantidade}"

@@ -160,9 +160,17 @@ class RachaDetailSerializer(RachaSerializer):
     """Serializer detalhado de racha com premios"""
     
     premios = PremioSerializer(many=True, read_only=True)
+    album = serializers.SerializerMethodField()
     
     class Meta(RachaSerializer.Meta):
-        fields = RachaSerializer.Meta.fields + ['premios']
+        fields = RachaSerializer.Meta.fields + ['premios', 'album']
+
+    def get_album(self, obj):
+        from .album import resumo_album_usuario
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        return resumo_album_usuario(obj, request.user)
 
 
 class JogadoresRachaSerializer(serializers.ModelSerializer):

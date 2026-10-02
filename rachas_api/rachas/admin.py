@@ -222,3 +222,44 @@ class SolicitacaoRachaAdmin(admin.ModelAdmin):
     
     aprovar_solicitacoes.short_description = "Aprovar solicitações selecionadas"
     negar_solicitacoes.short_description = "Negar solicitações selecionadas"
+
+
+from .models import Album, PaginaAlbum, Figurinha, EnvioPacotes, Pacote, FigurinhaJogador
+
+
+@admin.register(Album)
+class AlbumAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'racha', 'peso_bronze', 'peso_prata', 'peso_ouro', 'peso_lenda', 'criado_em')
+    search_fields = ('titulo', 'racha__nome')
+
+
+@admin.register(PaginaAlbum)
+class PaginaAlbumAdmin(admin.ModelAdmin):
+    list_display = ('numero', 'jogador', 'album', 'criada_em')
+    list_filter = (('album', RelatedOnlyFieldListFilter),)
+    search_fields = ('jogador__username', 'jogador__first_name', 'jogador__last_name')
+
+
+@admin.register(Figurinha)
+class FigurinhaAdmin(admin.ModelAdmin):
+    list_display = ('numero', 'pagina', 'raridade')
+    list_filter = ('raridade',)
+
+
+@admin.register(EnvioPacotes)
+class EnvioPacotesAdmin(admin.ModelAdmin):
+    list_display = ('criado_em', 'album', 'motivo', 'enviado_por', 'total_destinatarios', 'pacotes_por_jogador', 'figurinhas_por_pacote')
+
+
+@admin.register(Pacote)
+class PacoteAdmin(admin.ModelAdmin):
+    list_display = ('dono', 'album', 'quantidade_figurinhas', 'motivo', 'criado_em', 'aberto_em')
+    list_filter = ('aberto_em',)
+    search_fields = ('dono__username', 'motivo')
+
+
+@admin.register(FigurinhaJogador)
+class FigurinhaJogadorAdmin(admin.ModelAdmin):
+    list_display = ('dono', 'figurinha', 'quantidade', 'colada')
+    list_filter = ('colada',)
+    search_fields = ('dono__username',)

@@ -19,9 +19,11 @@ interface PlayerCardModalProps {
   children: React.ReactNode;
   player: PlayerCardData;
   rachaName?: string;
+  /** Classes do gatilho; o padrão `min-w-0` permite que textos longos usem reticências. */
+  className?: string;
 }
 
-export function PlayerCardModal({ children, player, rachaName }: PlayerCardModalProps) {
+export function PlayerCardModal({ children, player, rachaName, className = "min-w-0" }: PlayerCardModalProps) {
   const shareRef = useRef<HTMLDivElement>(null);
   const [sharePlayer, setSharePlayer] = React.useState<PlayerCardData>(player);
   const [sharing, setSharing] = React.useState(false);
@@ -161,7 +163,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
               e.currentTarget.click();
             }
           }}
-          className="cursor-pointer rounded-2xl transition-opacity hover:opacity-90"
+          className={`cursor-pointer rounded-2xl transition-opacity hover:opacity-90 ${className}`}
         >
           {children}
         </div>

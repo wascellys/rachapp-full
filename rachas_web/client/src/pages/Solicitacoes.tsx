@@ -142,28 +142,28 @@ export default function Solicitacoes() {
               {recebidas.map((solicitacao) => (
                 <Card key={solicitacao.id} className="overflow-hidden">
                   <CardHeader className="pb-3 bg-muted/30">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="outline" className="bg-background">
-                        {solicitacao.racha.nome}
+                    <div className="flex justify-between items-start gap-2">
+                      <Badge variant="outline" className="min-w-0 max-w-full bg-background" title={solicitacao.racha.nome}>
+                        <span className="truncate">{solicitacao.racha.nome}</span>
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {formatarData(solicitacao.criado_em)}
                       </span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="flex items-center gap-4 mb-4">
-                      <Avatar className="h-12 w-12 bg-background rounded-full" >
+                      <Avatar className="h-12 w-12 shrink-0 bg-background rounded-full" >
                         <AvatarImage src={solicitacao.jogador.imagem_perfil || ''} />
                         <AvatarFallback className="bg-primary/20 text-primary">
                           {iniciais(nomeCompleto(solicitacao.jogador))}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="font-semibold text-lg">
+                      <div className="min-w-0">
+                        <h4 className="truncate font-semibold text-lg" title={nomeCompleto(solicitacao.jogador)}>
                           {nomeCompleto(solicitacao.jogador)}
                         </h4>
-                        <p className="text-sm text-muted-foreground">@{solicitacao.jogador.username} • {posicaoLabel(solicitacao.jogador.posicao)}</p>
+                        <p className="truncate text-sm text-muted-foreground">@{solicitacao.jogador.username} • {posicaoLabel(solicitacao.jogador.posicao)}</p>
                       </div>
                     </div>
 
@@ -207,12 +207,12 @@ export default function Solicitacoes() {
           ) : (
             <div className="space-y-4">
               {enviadas.map((s) => (
-                <div key={s.id} className="flex justify-between items-center p-4 border rounded-lg bg-card shadow-sm">
-                  <div>
-                    <p className="font-semibold text-lg">{s.racha.nome}</p>
+                <div key={s.id} className="flex justify-between items-center gap-3 p-4 border rounded-lg bg-card shadow-sm">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-lg" title={s.racha.nome}>{s.racha.nome}</p>
                     <p className="text-sm text-muted-foreground">Enviada em {formatarData(s.criado_em)}</p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex shrink-0 items-center gap-4">
                     {getStatusBadge(s.status)}
                   </div>
                 </div>

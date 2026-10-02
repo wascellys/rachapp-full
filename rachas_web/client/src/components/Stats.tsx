@@ -34,11 +34,11 @@ export function StatTile({
   return (
     <div className={cn("stat-tile", className)}>
       <div className="flex items-center justify-between gap-2 text-muted-foreground">
-        <span className="text-xs font-extrabold uppercase tracking-wider">{label}</span>
-        {icon && <span className="text-base" aria-hidden>{icon}</span>}
+        <span className="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider" title={label}>{label}</span>
+        {icon && <span className="shrink-0 text-base" aria-hidden>{icon}</span>}
       </div>
-      <span className="text-3xl font-black tabular-nums leading-tight text-foreground">{value}</span>
-      {hint && <span className="text-xs font-semibold text-muted-foreground">{hint}</span>}
+      <span className="truncate text-3xl font-black tabular-nums leading-tight text-foreground">{value}</span>
+      {hint && <span className="truncate text-xs font-semibold text-muted-foreground" title={hint}>{hint}</span>}
     </div>
   );
 }
@@ -200,7 +200,7 @@ export function Podio({
       {itens.slice(0, 3).map((item, idx) => {
         const e = PODIO_ESTILO[idx];
         const conteudo = (
-          <div className="flex flex-col items-center gap-1.5 text-center">
+          <div className="flex w-full min-w-0 flex-col items-center gap-1.5 text-center">
             <div className="relative">
               <Avatar
                 className={cn("rounded-full border-4 bg-card", idx === 0 ? "size-20 sm:size-24" : "size-16 sm:size-20")}
@@ -216,15 +216,15 @@ export function Podio({
                 {e.label}
               </span>
             </div>
-            <span className="mt-1 line-clamp-1 max-w-full text-sm font-extrabold">{item.nome}</span>
+            <span className="mt-1 block w-full truncate text-sm font-extrabold" title={item.nome}>{item.nome}</span>
             <span className="text-xs font-bold text-muted-foreground">
               <span className="text-base font-black tabular-nums text-foreground">{item.valor}</span> {unidade}
             </span>
-            {item.detalhe && <span className="text-[11px] font-semibold text-muted-foreground">{item.detalhe}</span>}
+            {item.detalhe && <span className="block w-full truncate text-[11px] font-semibold text-muted-foreground">{item.detalhe}</span>}
           </div>
         );
         return (
-          <div key={item.id} className={cn("flex flex-col items-center", e.ordem)}>
+          <div key={item.id} className={cn("flex min-w-0 flex-col items-center", e.ordem)}>
             {wrap ? wrap(item, conteudo) : conteudo}
             <div
               className={cn("podium-step mt-2 w-full", e.altura)}

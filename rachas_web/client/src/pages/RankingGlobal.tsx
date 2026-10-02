@@ -85,7 +85,7 @@ export default function RankingGlobal() {
                 }))}
                 wrap={(item, node) => {
                   const r = ranking.find(x => x.jogador_id === item.id)!;
-                  return <PlayerCardModal player={carta(r)}>{node}</PlayerCardModal>;
+                  return <PlayerCardModal player={carta(r)} className="w-full min-w-0">{node}</PlayerCardModal>;
                 }}
               />
             </CardContent>
@@ -113,7 +113,7 @@ export default function RankingGlobal() {
                     {ranking.map(item => (
                       <tr key={item.jogador_id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40">
                         <td className="py-3 pl-4 text-sm font-black tabular-nums text-muted-foreground sm:pl-2">{item.posicao}º</td>
-                        <td className="py-3">
+                        <td className="w-full max-w-0 py-3">
                           <PlayerCardModal player={carta(item)}>
                             <div className="flex items-center gap-3 pr-2">
                               <Avatar className="size-10 shrink-0 rounded-full border-2 border-border bg-muted">
@@ -121,8 +121,8 @@ export default function RankingGlobal() {
                                 <AvatarFallback className="bg-primary/15 text-xs font-black text-primary">{iniciais(item.jogador_nome)}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="truncate font-bold">{item.jogador_nome}</p>
-                                <p className="text-xs font-semibold text-muted-foreground">
+                                <p className="truncate font-bold" title={item.jogador_nome}>{item.jogador_nome}</p>
+                                <p className="truncate text-xs font-semibold text-muted-foreground">
                                   <span className="sm:hidden">{item.gols}G · {item.assistencias}A</span>
                                   <span className="hidden sm:inline">{posicaoLabel(item.posicao_campo)}</span>
                                 </p>

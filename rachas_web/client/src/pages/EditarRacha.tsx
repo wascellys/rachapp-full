@@ -309,7 +309,8 @@ export default function EditarRacha() {
                     />
                     <label
                       htmlFor={`admin-${item.jogador.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      className="min-w-0 truncate text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      title={`${nomeCompleto(item.jogador)} @${item.jogador.username}`}
                     >
                       {nomeCompleto(item.jogador)} <span className="text-muted-foreground">@{item.jogador.username}</span>
                     </label>

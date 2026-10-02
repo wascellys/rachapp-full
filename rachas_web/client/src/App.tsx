@@ -22,6 +22,8 @@ import Dashboard from "./pages/Dashboard";
 import RankingGlobal from "./pages/RankingGlobal";
 import EsqueciSenha from "./pages/EsqueciSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
+import Album from "./pages/Album";
+import AlbumAdmin from "./pages/AlbumAdmin";
 
 function Router() {
   return (
@@ -65,6 +67,18 @@ function Router() {
       <Route path="/racha/:id/editar">
         <Layout>
           <EditarRacha />
+        </Layout>
+      </Route>
+
+      <Route path="/racha/:id/album">
+        <Layout>
+          <Album />
+        </Layout>
+      </Route>
+
+      <Route path="/racha/:id/album/gerenciar">
+        <Layout>
+          <AlbumAdmin />
         </Layout>
       </Route>
 

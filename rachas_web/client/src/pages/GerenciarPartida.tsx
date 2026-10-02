@@ -302,16 +302,16 @@ export default function GerenciarPartida() {
       {/* Placar */}
       <section className="relative overflow-hidden rounded-3xl border-2 border-border bg-card p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black">Partida de {formatarData(dataPartida(partida))}</h1>
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-2xl font-black">Partida de {formatarData(dataPartida(partida))}</h1>
               {emAndamento ? (
                 <Badge variant="live"><span className="size-1.5 animate-pulse rounded-full bg-success" /> Ao vivo</Badge>
               ) : (
                 <Badge variant="muted">Encerrada</Badge>
               )}
             </div>
-            {partida.local && <p className="text-sm font-semibold text-muted-foreground">{partida.local}</p>}
+            {partida.local && <p className="truncate text-sm font-semibold text-muted-foreground" title={partida.local}>{partida.local}</p>}
           </div>
           <div className="flex gap-6">
             {[
@@ -366,7 +366,7 @@ export default function GerenciarPartida() {
                       <AvatarFallback className="bg-muted font-black">{iniciais(nomeCompleto(jp.jogador))}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold">{nomeCompleto(jp.jogador)}</p>
+                      <p className="truncate font-bold" title={nomeCompleto(jp.jogador)}>{nomeCompleto(jp.jogador)}</p>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-bold text-muted-foreground">
                         <span>{posicaoLabel(jp.jogador.posicao)}</span>
                         {r?.gols ? <span className="inline-flex items-center gap-1 text-foreground"><FaFutbol aria-hidden /> {r.gols} {r.gols === 1 ? "gol" : "gols"}</span> : null}
