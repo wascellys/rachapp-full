@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FaTrophy } from "react-icons/fa";
 import { toast } from "sonner";
+import { mensagemErro } from "@/lib/format";
 
 interface Premio {
   id: string;
@@ -59,8 +60,9 @@ export function SelectPremioModal({
 
   const carregarPremios = async () => {
     try {
-      const response = await api.get(`/premios/?search=&racha=${rachaId}`);
-      setPremios(response.data?.results || []);
+      const response = await api.get(`/premios/?racha=${rachaId}`);
+      const lista = Array.isArray(response.data) ? response.data : response.data?.results || [];
+      setPremios(lista.filter((p: Premio & { ativo?: boolean }) => p.ativo !== false));
 
     } catch (error) {
       console.error("Erro ao carregar prêmios:", error);
@@ -85,8 +87,7 @@ export function SelectPremioModal({
       onOpenChange(false);
       setSelectedPremioId("");
     } catch (error) {
-      console.error("Erro ao associar prêmio:", error);
-      toast.error("Erro ao associar prêmio.");
+      toast.error(mensagemErro(error, "Erro ao associar prêmio."));
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,7 @@ export function SelectPremioModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FaTrophy className="text-yellow-500" /> Associar Prêmio
+            <FaTrophy className="text-gold" /> Associar Prêmio
           </DialogTitle>
           <DialogDescription>
             Selecione um prêmio para conceder ao jogador <strong>{jogadorNome}</strong> nesta partida.
@@ -135,7 +136,7 @@ export function SelectPremioModal({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={confirmarPremio} disabled={!selectedPremioId || loading} className="bg-yellow-600 hover:bg-yellow-700 text-white">
+          <Button onClick={confirmarPremio} disabled={!selectedPremioId || loading} >
             {loading ? "Salvando..." : "Confirmar Prêmio"}
           </Button>
         </DialogFooter>

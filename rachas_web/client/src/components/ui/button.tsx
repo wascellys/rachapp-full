@@ -10,9 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/95 shadow-[0_4px_0_oklch(0.45_0.22_142)] hover:shadow-[0_6px_0_oklch(0.45_0.22_142)] hover:-translate-y-0.5 active:shadow-[0_1px_0_oklch(0.45_0.22_142)]",
+          "bg-primary text-primary-foreground hover:bg-primary/95 shadow-[var(--shadow-btn)] hover:shadow-[var(--shadow-btn-hover)] hover:-translate-y-0.5 active:shadow-[var(--shadow-btn-active)]",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 shadow-[0_4px_0_oklch(0.38_0.18_25)] hover:shadow-[0_6px_0_oklch(0.38_0.18_25)] hover:-translate-y-0.5 active:shadow-[0_1px_0_oklch(0.38_0.18_25)] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-[0_4px_0_oklch(0.38_0.18_25)] hover:shadow-[0_6px_0_oklch(0.38_0.18_25)] hover:-translate-y-0.5 active:shadow-[0_1px_0_oklch(0.38_0.18_25)] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
           "border-2 border-border bg-transparent font-bold hover:bg-accent hover:text-accent-foreground hover:border-primary/60 dark:bg-transparent dark:border-input dark:hover:bg-input/50",
         secondary:

@@ -1,234 +1,113 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  FaPlus,
-  FaTrophy,
-  FaUsers,
-  FaCalendarAlt,
-  FaArrowRight,
-  FaThLarge,
-  FaList,
-} from "react-icons/fa";
+import { Card, CardContent } from "@/components/ui/card";
+import { FaPlus, FaUsers, FaArrowRight, FaSignInAlt, FaFutbol } from "react-icons/fa";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { mensagemErro } from "@/lib/format";
 
 interface Racha {
   id: string;
   nome: string;
-  data_inicio: string | null;
+  descricao?: string | null;
   total_jogadores: number;
   codigo_convite: string;
-  administrador: {
-    username: string;
-  };
+  is_admin: boolean;
+  ponto_gol: number;
+  ponto_assistencia: number;
+  ponto_presenca: number;
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const [rachas, setRachas] = useState<Racha[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRachas = async () => {
-      try {
-        const response = await api.get("/rachas/meus_rachas/");
-        setRachas(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar rachas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRachas();
+    api
+      .get("/rachas/meus_rachas/")
+      .then(res => setRachas(res.data))
+      .catch(error => setErro(mensagemErro(error, "Não foi possível carregar seus rachas.")))
+      .finally(() => setLoading(false));
   }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Meus Rachas</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas peladas e acompanhe seu desempenho
+          <p className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">
+            Olá, {user?.first_name || user?.username} 👋
           </p>
+          <h1 className="text-3xl font-black tracking-tight">Meus Rachas</h1>
+          <p className="text-muted-foreground">Gerencie suas peladas e acompanhe seu desempenho.</p>
         </div>
-        <div className="flex gap-2 w-full md:justify-end xl:gap-4 flex-wrap items-center justify-content-center">
-          <div className="flex items-center bg-muted rounded-lg p-1 border border-border mr-2">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode("grid")}
-            >
-              <FaThLarge className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => setViewMode("list")}
-            >
-              <FaList className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button
-            className="flex-1 md:flex-none"
-            onClick={() => (window.location.href = "/novo-racha")}
-          >
-            <FaPlus className="mr-2" /> Novo Racha
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 md:flex-none"
-            onClick={() => (window.location.href = "/entrar-racha")}
-          >
-            Entrar com Código
-          </Button>
+        <div className="flex w-full gap-2 md:w-auto">
+          <Link href="/novo-racha" className="flex-1 md:flex-none">
+            <Button className="w-full"><FaPlus /> Novo racha</Button>
+          </Link>
+          <Link href="/entrar-racha" className="flex-1 md:flex-none">
+            <Button variant="outline" className="w-full"><FaSignInAlt /> Entrar com código</Button>
+          </Link>
         </div>
       </div>
 
-      {rachas.length === 0 ? (
-        <Card className="border-dashed border-2 bg-muted/20">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <FaUsers className="text-muted-foreground text-2xl" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">
-              Nenhum racha encontrado
-            </h3>
-            <p className="text-muted-foreground max-w-sm mb-6">
-              Você ainda não participa de nenhum racha. Crie um novo ou entre em
-              um existente usando um código de convite.
-            </p>
-            <Button onClick={() => (window.location.href = "/novo-racha")}>
-              Criar meu primeiro Racha
-            </Button>
-          </CardContent>
-        </Card>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-44 w-full rounded-3xl" />)}
+        </div>
+      ) : erro ? (
+        <Card><CardContent className="py-10 text-center font-bold text-destructive">{erro}</CardContent></Card>
+      ) : rachas.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 rounded-3xl border-2 border-dashed border-border bg-card/50 px-6 py-16 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-primary/15 text-2xl text-primary">
+            <FaFutbol aria-hidden />
+          </div>
+          <h2 className="text-xl font-black">Bora pro primeiro racha?</h2>
+          <p className="max-w-sm text-muted-foreground">
+            Crie um racha para a sua turma ou peça o código de convite para quem organiza a pelada.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Link href="/novo-racha"><Button><FaPlus /> Criar meu primeiro racha</Button></Link>
+            <Link href="/entrar-racha"><Button variant="outline">Tenho um código</Button></Link>
+          </div>
+        </div>
+      ) : (
+        <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {rachas.map(racha => (
-            <Link key={racha.id} href={`/racha/${racha.id}`}>
-              <Card className="hover:border-primary/50 transition-all cursor-pointer group h-full flex flex-col gap-0 py-4">
-                <CardHeader className="pb-2 px-4">
-                  <div className="flex justify-between items-center">
-                    <Badge
-                      variant="outline"
-                      className="bg-primary/5 text-primary border-primary/20 text-xs"
-                    >
-                      {racha.codigo_convite}
-                    </Badge>
-                    {racha.data_inicio && (
-                      <span className="text-xs text-muted-foreground flex items-center">
-                        <FaCalendarAlt className="mr-1" />
-                        {new Date(racha.data_inicio).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                  <CardTitle className="text-base group-hover:text-primary transition-colors mt-1">
-                    {racha.nome}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 px-4 py-2">
-                  {/* Layout horizontal compacto */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-lg">
-                      <FaUsers className="text-primary text-sm" />
-                      <span className="font-bold text-lg leading-none">{racha.total_jogadores}</span>
-                      <span className="text-xs text-muted-foreground">jogadores</span>
+            <Link key={racha.id} href={`/racha/${racha.id}`} className="group rounded-3xl">
+              <Card className="card-game relative h-full overflow-hidden transition-colors group-hover:border-primary/60">
+                <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-primary/10 blur-xl" />
+                <CardContent className="relative flex h-full flex-col gap-4 p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-xl text-primary">
+                      <FaFutbol aria-hidden />
+                    </div>
+                    <div className="flex gap-1.5">
+                      {racha.is_admin && <Badge variant="gold">Admin</Badge>}
+                      <Badge variant="outline" className="font-mono tracking-widest">{racha.codigo_convite}</Badge>
                     </div>
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="truncate text-lg font-black transition-colors group-hover:text-primary">{racha.nome}</h2>
+                    {racha.descricao && <p className="line-clamp-2 text-sm text-muted-foreground">{racha.descricao}</p>}
+                  </div>
+                  <div className="flex items-center justify-between text-sm font-bold text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <FaUsers aria-hidden /> <span className="text-foreground">{racha.total_jogadores}</span> jogadores
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      Abrir <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" aria-hidden />
+                    </span>
+                  </div>
                 </CardContent>
-                <CardFooter className="px-4 pt-2 pb-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full group-hover:bg-primary/10 group-hover:text-primary text-xs"
-                  >
-                    Ver Detalhes <FaArrowRight className="ml-2 h-3 w-3" />
-                  </Button>
-                </CardFooter>
               </Card>
             </Link>
           ))}
         </div>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border text-left text-sm text-muted-foreground">
-                    <th className="p-4 font-medium">Nome</th>
-                    <th className="p-4 font-medium">Código</th>
-                    <th className="p-4 font-medium text-center">Jogadores</th>
-                    <th className="p-4 font-medium text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rachas.map(racha => (
-                    <tr
-                      key={racha.id}
-                      className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="p-4 font-medium">
-                        <Link
-                          href={`/racha/${racha.id}`}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {racha.nome}
-                        </Link>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant="outline">{racha.codigo_convite}</Badge>
-                      </td>
-                      <td className="p-4 text-center">
-                        {racha.total_jogadores}
-                      </td>
-                      <td className="p-4 text-right">
-                        <Link href={`/racha/${racha.id}`}>
-                          <Button variant="ghost" size="sm">
-                            Ver Detalhes{" "}
-                            <FaArrowRight className="ml-2 h-3 w-3" />
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );

@@ -71,7 +71,7 @@ export function PremioModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FaTrophy className="text-yellow-500" />
+            <FaTrophy className="text-gold" />
             {initialData ? "Editar Prêmio" : "Novo Prêmio"}
           </DialogTitle>
         </DialogHeader>

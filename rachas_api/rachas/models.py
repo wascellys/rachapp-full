@@ -225,7 +225,15 @@ class SolicitacaoRacha(models.Model):
     
     class Meta:
         db_table = 'solicitacao_racha'
-        unique_together = ('racha', 'jogador','status')
+        # Só pode existir uma solicitação PENDENTE por jogador/racha; o histórico
+        # de aceitas/negadas pode se repetir (ex.: negado duas vezes, saiu e voltou).
+        constraints = [
+            models.UniqueConstraint(
+                fields=['racha', 'jogador'],
+                condition=models.Q(status='PENDENTE'),
+                name='unica_solicitacao_pendente',
+            ),
+        ]
         verbose_name = 'Solicitação Racha'
         verbose_name_plural = 'Solicitações Rachas'
         ordering = ['-criado_em']

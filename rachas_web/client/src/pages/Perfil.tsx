@@ -30,6 +30,7 @@ import {
   FaCamera,
 } from "react-icons/fa";
 import { toast } from "sonner";
+import { mensagemErro } from "@/lib/format";
 import { ImageCropper } from "@/components/ImageCropper";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -133,8 +134,7 @@ export default function Perfil() {
       await refreshUser();
       toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
-      console.error("Erro ao atualizar perfil:", error);
-      toast.error("Erro ao atualizar perfil. Tente novamente.");
+      toast.error(mensagemErro(error, "Erro ao atualizar perfil. Tente novamente."));
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ export default function Perfil() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
+    <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3 mb-2">
@@ -187,7 +187,8 @@ export default function Perfil() {
                 </Avatar>
                 <label
                   htmlFor="foto-upload"
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  aria-label="Alterar foto de perfil"
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity cursor-pointer"
                 >
                   <FaCamera className="text-white w-8 h-8" />
                 </label>
@@ -199,9 +200,10 @@ export default function Perfil() {
                   onChange={handleFileChange}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Clique na foto para alterar
-              </p>
+              <label htmlFor="foto-upload" className="cursor-pointer text-sm font-bold text-primary hover:underline">
+                Alterar foto
+              </label>
+              <p className="-mt-2 text-xs text-muted-foreground">Sua foto aparece na carta de jogador.</p>
               
               {formData.imagem_perfil && (
                 <div className="flex items-center space-x-2">

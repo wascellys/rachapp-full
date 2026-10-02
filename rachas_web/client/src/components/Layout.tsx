@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { iniciais, posicaoLabel } from "@/lib/format";
+import { Moon, Sun } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import {
   FaFutbol,
@@ -25,7 +28,8 @@ import {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAuthenticated, loading } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
   /* New logic for badge */
@@ -36,11 +40,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       if (isAuthenticated) {
         try {
           const res = await api.get('/solicitacoes/');
-          // Filter strictly for 'PENDENTE' in the default list (received requests)
-          const count = res.data.results
-            ? res.data.results.filter((s: any) => s.status === 'PENDENTE').length
-            : res.data.filter((s: any) => s.status === 'PENDENTE').length;
-          setPendingCount(count);
+          const lista = Array.isArray(res.data) ? res.data : res.data.results || [];
+          setPendingCount(lista.filter((s: any) => s.status === 'PENDENTE').length);
         } catch (e) {
           console.error("Failed to fetch pending requests count", e);
         }
@@ -50,7 +51,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (!loading && isAuthenticated) {
       fetchCount();
     }
-  }, [isAuthenticated, loading]);
+    // Recarrega a cada navegação para o badge refletir aprovações/negativas
+  }, [isAuthenticated, loading, location]);
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      setLocation("/login", { replace: true });
+    }
+  }, [loading, isAuthenticated, setLocation]);
 
   if (loading) {
     return (
@@ -66,21 +74,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    if (location !== "/login" && location !== "/register") {
-      window.location.href = "/login";
-      return null;
-    }
-    return <>{children}</>;
+    return null;
   }
 
   const navItems = [
-    { path: "/", label: "Meus Rachas", icon: FaFutbol },
-    { path: "/dashboard", label: "Dashboard", icon: FaChartBar },
-    { path: "/solicitacoes", label: "Solicitações", icon: FaUsers, badge: pendingCount },
-    { path: "/ranking", label: "Ranking Global", icon: FaTrophy },
+    { path: "/", label: "Meus Rachas", short: "Rachas", icon: FaFutbol },
+    { path: "/dashboard", label: "Meu Desempenho", short: "Desempenho", icon: FaChartBar },
+    { path: "/solicitacoes", label: "Solicitações", short: "Pedidos", icon: FaUsers, badge: pendingCount },
+    { path: "/ranking", label: "Ranking Global", short: "Ranking", icon: FaTrophy },
   ];
 
-  const isActive = (path: string) => location === path;
+  // "Meus Rachas" também fica ativo dentro de um racha/partida
+  const isActive = (path: string) =>
+    path === "/"
+      ? location === "/" || location.startsWith("/racha") || location.startsWith("/partida") ||
+        location === "/novo-racha" || location === "/entrar-racha"
+      : location.startsWith(path);
+
+  const themeItem = (
+    <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer rounded-xl font-bold">
+      {theme === "dark" ? <Sun className="mr-2 size-4" /> : <Moon className="mr-2 size-4" />}
+      {theme === "dark" ? "Tema claro" : "Tema escuro"}
+    </DropdownMenuItem>
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
@@ -173,16 +189,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Avatar className="rounded-2xl bg-primary/15 h-9 w-9 shrink-0">
                     <AvatarImage src={user?.imagem_perfil || ""} />
                     <AvatarFallback className="bg-primary text-primary-foreground font-black rounded-2xl">
-                      {user?.first_name?.charAt(0) || user?.username?.charAt(0)}
+                      {iniciais(user?.first_name || user?.username)}
                     </AvatarFallback>
                   </Avatar>
                   {!collapsed && (
                     <div className="flex-1 overflow-hidden">
                       <p className="text-sm font-extrabold truncate">
-                        {user?.username}
+                        {user?.first_name || user?.username}
                       </p>
                       <p className="text-xs text-muted-foreground truncate font-semibold">
-                        {user?.posicao}
+                        {posicaoLabel(user?.posicao)}
                       </p>
                     </div>
                   )}
@@ -196,6 +212,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <FaUserCircle className="mr-2" /> Perfil
                   </DropdownMenuItem>
                 </Link>
+                {themeItem}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer rounded-xl font-bold text-destructive focus:text-destructive"
@@ -227,11 +245,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger aria-label="Menu da conta" className="rounded-xl">
             <Avatar className="h-9 w-9 cursor-pointer rounded-xl bg-primary/15 shrink-0">
               <AvatarImage src={user?.imagem_perfil || ""} />
               <AvatarFallback className="bg-primary text-primary-foreground font-black rounded-xl text-sm">
-                {user?.first_name?.charAt(0) || "U"}
+                {iniciais(user?.first_name || user?.username)}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -241,6 +259,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <FaUserCircle className="mr-2" /> Perfil
               </DropdownMenuItem>
             </Link>
+            {themeItem}
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={logout}
               className="cursor-pointer rounded-xl font-bold text-destructive focus:text-destructive"
@@ -284,7 +304,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                   </div>
                   <span className={`text-[10px] font-extrabold transition-all ${active ? "text-primary" : ""}`}>
-                    {item.label.split(" ")[0]}
+                    {item.short}
                   </span>
                 </div>
               </Link>

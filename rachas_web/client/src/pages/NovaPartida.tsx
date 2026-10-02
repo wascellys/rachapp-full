@@ -19,6 +19,8 @@ import {
 } from "react-icons/fa";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
+import { mensagemErro } from "@/lib/format";
+import { invalidateRachaCache } from "@/lib/useRachaCache";
 
 export default function NovaPartida() {
   const [, setLocation] = useLocation();
@@ -26,28 +28,26 @@ export default function NovaPartida() {
   const rachaId = params?.id;
 
   const [loading, setLoading] = useState(false);
+  const hoje = new Date();
   const [formData, setFormData] = useState({
-    data: new Date().toISOString().split("T")[0],
-    horario: "08:00",
+    data: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`,
+    horario: "20:00",
     local: "",
-    valor_total: "",
   });
 
+  // Sugere local/horário da última partida do racha
   useEffect(() => {
-    if (rachaId) {
-      // Carregar dados do racha para preencher local e horário padrão
-      api
-        .get(`/rachas/${rachaId}/`)
-        .then(response => {
-          const racha = response.data;
-          setFormData(prev => ({
-            ...prev,
-            horario: racha.horario || "08:00",
-            local: racha.local || "",
-          }));
-        })
-        .catch(console.error);
-    }
+    if (!rachaId) return;
+    api
+      .get(`/partidas/?racha=${rachaId}`)
+      .then(res => {
+        const lista = Array.isArray(res.data) ? res.data : res.data.results || [];
+        const ultima = lista[0];
+        if (ultima) {
+          setFormData(prev => ({ ...prev, horario: ultima.horario || prev.horario, local: ultima.local || prev.local }));
+        }
+      })
+      .catch(() => {});
   }, [rachaId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,24 +59,23 @@ export default function NovaPartida() {
     setLoading(true);
 
     try {
+      // Data + horário no fuso local do aparelho, enviados em ISO (com fuso)
+      const inicio = new Date(`${formData.data}T${formData.horario || "00:00"}`);
       const payload = {
         racha: rachaId,
-        data: formData.data,
+        data_inicio: inicio.toISOString(),
         horario: formData.horario,
         local: formData.local,
-        valor_total: formData.valor_total
-          ? parseFloat(formData.valor_total)
-          : 0,
         status: true,
       };
 
       const response = await api.post("/partidas/", payload);
       toast.success("Partida criada com sucesso!");
       // Redirecionar para a tela de gestão da partida criada
+      if (rachaId) invalidateRachaCache(rachaId);
       setLocation(`/partida/${response.data.id}/gerenciar`);
     } catch (error: any) {
-      console.error("Erro ao criar partida:", error);
-      toast.error(error.response?.data?.detail || "Erro ao criar partida.");
+      toast.error(mensagemErro(error, "Erro ao criar partida."));
     } finally {
       setLoading(false);
     }
@@ -100,7 +99,7 @@ export default function NovaPartida() {
             </div>
             <CardTitle className="text-2xl">Nova Partida</CardTitle>
           </div>
-          <CardDescription>Agende o próximo jogo da galera.</CardDescription>
+          <CardDescription>Crie a partida e depois marque quem veio, os gols e os prêmios.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -152,22 +151,6 @@ export default function NovaPartida() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="valor_total">Custo Total (R$)</Label>
-              <Input
-                id="valor_total"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={formData.valor_total}
-                onChange={handleChange}
-              />
-              <p className="text-xs text-muted-foreground">
-                Opcional. Usado para dividir os custos entre os jogadores
-                presentes.
-              </p>
-            </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-end gap-3 border-t pt-6">

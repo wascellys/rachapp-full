@@ -38,10 +38,14 @@ function cacheSet<T>(key: string, data: T): void {
 }
 
 export function invalidateRachaCache(rachaId: string): void {
-  const keys = [`racha:${rachaId}:details`, `racha:${rachaId}:ranking`,
-                `racha:${rachaId}:partidas`, `racha:${rachaId}:jogadores`,
-                `racha:${rachaId}:premios`];
-  keys.forEach(k => sessionStorage.removeItem(k));
+  try {
+    // Remove todas as entradas do racha (ex.: racha:<id>:all, racha:<id>:stats)
+    Object.keys(sessionStorage)
+      .filter(k => k.startsWith(`racha:${rachaId}:`))
+      .forEach(k => sessionStorage.removeItem(k));
+  } catch {
+    // sessionStorage indisponível — nada a invalidar
+  }
 }
 
 export { cacheGet, cacheSet };

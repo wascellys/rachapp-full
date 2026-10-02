@@ -1,5 +1,22 @@
 # 📋 Documentação Técnica Completa - API de Rachas
 
+> **Mudanças de contrato (outubro/2026)** — prevalecem sobre o restante deste documento:
+>
+> - Todos os endpoints exigem autenticação, exceto `POST /api/v1/usuarios/` (cadastro) e os de `/api/auth/`.
+> - `POST /api/v1/usuarios/` valida a senha (validadores do Django) e recusa e-mail já cadastrado.
+> - Só o próprio usuário altera/exclui seu cadastro (`PUT/PATCH/DELETE /usuarios/{id}/`); `auth_uid` só aparece em `/usuarios/me/`.
+> - `GET /api/v1/rachas/` lista apenas os rachas do usuário (antes listava todos, com os códigos de convite).
+> - `POST /api/v1/rachas/{id}/entrar_por_codigo/` foi removido; use `POST /api/v1/solicitacoes/` com `{"codigo_convite": "..."}` (aceita minúsculas/espaços).
+> - `POST /api/v1/partidas/{id}/registrar_premio/` nunca esteve roteado e foi removido; use `associar_premio`.
+> - Ações de partida (`adicionar_jogador`, `registrar_presenca`, `registrar_gol`, `editar_registro`, `remover_registro`, `associar_premio`, `editar_premio`, `remover_premio`, `finalizar`, `PATCH`, `DELETE`) e de prêmio (criar/editar/excluir) exigem ser **admin do racha** — retornam **403** caso contrário (antes: 500 ou permitido).
+> - `registrar_gol`: autor e assistente precisam ser do racha e não podem ser a mesma pessoa; autor `null` = gol não identificado.
+> - `editar_registro` aceita `jogador_gol_id: null` (gol não identificado) e `jogador_assistencia_id: null` (sem assistência).
+> - `GET /partidas/`, `/premios/` e `/solicitacoes/` retornam a lista completa (sem paginação). Jogadores comuns também listam os prêmios dos seus rachas.
+> - `/solicitacoes/` aceita apenas GET/POST + ações `aprovar`/`negar` (só para solicitações pendentes). Um jogador negado ou removido pode pedir novamente.
+> - Novo: `GET /api/v1/rachas/{id}/estatisticas/` → `{totais: {...}, por_partida: [{partida_id, data, gols, assistencias, presentes, premios}]}`.
+> - `GET /rachas/{id}/ranking/` inclui `premios` (quantidade); `/usuarios/dashboard/` inclui `data_criacao`, `premios` e `historico`; `/usuarios/ranking_global/` inclui `presencas`.
+> - O e-mail de "esqueci minha senha" agora leva a `{FRONTEND_URL}/redefinir-senha/{uid}/{token}`.
+
 ## Índice
 1. [Autenticação](#autenticação)
 2. [Usuários](#usuários)
@@ -1593,7 +1610,7 @@ Content-Type: application/json
 
 ### Fluxo 2: Jogador Entrar em um Racha
 
-1. **POST /api/v1/rachas/{id}/entrar_por_codigo/** - Solicitar entrada
+1. **POST /api/v1/solicitacoes/** (`{"codigo_convite": "XXXXX"}`) - Solicitar entrada
 2. Admin aprova: **POST /api/v1/solicitacoes/{id}/aprovar/**
 3. **GET /api/v1/rachas/meus_rachas/** - Ver rachas do jogador
 
@@ -1602,7 +1619,7 @@ Content-Type: application/json
 1. **POST /api/v1/partidas/** - Criar partida
 2. **POST /api/v1/partidas/{id}/registrar_presenca/** - Registrar presença
 3. **POST /api/v1/partidas/{id}/registrar_gol/** - Registrar gol
-4. **POST /api/v1/partidas/{id}/registrar_premio/** - Registrar prêmio
+4. **POST /api/v1/partidas/{id}/associar_premio/** - Registrar prêmio
 5. **POST /api/v1/partidas/{id}/finalizar/** - Finalizar partida
 6. **GET /api/v1/rachas/{id}/ranking/** - Ver novo ranking
 

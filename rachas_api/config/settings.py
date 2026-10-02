@@ -137,12 +137,13 @@ DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
     database_is_private_railway = 'postgres.railway.internal' in DATABASE_URL
+    database_is_sqlite = DATABASE_URL.startswith('sqlite')
 
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
-            conn_max_age=600,
-            ssl_require=not database_is_private_railway,
+            conn_max_age=0 if database_is_sqlite else 600,
+            ssl_require=not (database_is_private_railway or database_is_sqlite),
         )
     }
 else:
@@ -207,9 +208,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         # Removed SessionAuthentication to prevent CSRF requirements for the API
     ),
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticated',
-    # ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
@@ -221,8 +222,10 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# Permitir todas as origens em desenvolvimento para evitar problemas de CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# Por padrão libera todas as origens (app Capacitor + web). Em produção, defina
+# CORS_ALLOW_ALL_ORIGINS=false e CORS_ALLOWED_ORIGINS=https://seu-dominio,...
+CORS_ALLOW_ALL_ORIGINS = env_bool('CORS_ALLOW_ALL_ORIGINS', default=True)
+CORS_ALLOWED_ORIGINS = [o for o in config('CORS_ALLOWED_ORIGINS', default='').split(',') if o]
 CORS_ALLOW_CREDENTIALS = True
 
 # -------------------------------------
@@ -320,17 +323,20 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_SUBJECT_PREFIX = '' # Remove o prefixo [example.com] automático do allauth
 REST_AUTH = {
     'SESSION_LOGIN': False,
     'USE_JWT': True,
+    # Link do e-mail de "esqueci minha senha" aponta para o frontend
+    'PASSWORD_RESET_SERIALIZER': 'rachas.serializers.FrontendPasswordResetSerializer',
 }
 
 BASE_URL_SYSTEM = os.environ.get('BASE_URL_SYSTEM', 'http://127.0.0.1:8000')
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
-# BASE_URL_IMAGES = MEDIA_URL if 'AWS_ACCESS_KEY_ID' in os.environ else f'{BASE_URL_SYSTEM}{MEDIA_URL}'
+# Usado para montar a URL absoluta de imagens salvas no disco local (sem R2)
+BASE_URL_IMAGES = config('BASE_URL_IMAGES', default=f"{BASE_URL_SYSTEM.rstrip('/')}{MEDIA_URL}")
 
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='rachas.email_backend.ResendEmailBackend')

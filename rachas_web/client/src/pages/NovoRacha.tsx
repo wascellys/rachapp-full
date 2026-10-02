@@ -22,6 +22,7 @@ import {
 import { FaFutbol, FaArrowLeft } from "react-icons/fa";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
+import { mensagemErro } from "@/lib/format";
 
 export default function NovoRacha() {
   const [, setLocation] = useLocation();
@@ -29,11 +30,6 @@ export default function NovoRacha() {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    dia_semana: "SABADO",
-    horario: "08:00",
-    local: "",
-    valor_mensal: "",
-    limite_jogadores: "20",
     ponto_gol: "1",
     ponto_assistencia: "1",
     ponto_presenca: "1",
@@ -55,25 +51,18 @@ export default function NovoRacha() {
 
     try {
       const payload = {
-        ...formData,
-        valor_mensal: formData.valor_mensal
-          ? parseFloat(formData.valor_mensal)
-          : 0,
-        limite_jogadores: parseInt(formData.limite_jogadores),
+        nome: formData.nome.trim(),
+        descricao: formData.descricao,
         ponto_gol: parseInt(formData.ponto_gol),
         ponto_assistencia: parseInt(formData.ponto_assistencia),
         ponto_presenca: parseInt(formData.ponto_presenca),
       };
 
-      await api.post("/rachas/", payload);
-      toast.success("Racha criado com sucesso!");
-      setLocation("/");
+      const res = await api.post("/rachas/", payload);
+      toast.success(`Racha criado! Código de convite: ${res.data.codigo_convite}`);
+      setLocation(`/racha/${res.data.id}`);
     } catch (error: any) {
-      console.error("Erro ao criar racha:", error);
-      toast.error(
-        error.response?.data?.detail ||
-          "Erro ao criar racha. Verifique os dados."
-      );
+      toast.error(mensagemErro(error, "Erro ao criar racha. Verifique os dados."));
     } finally {
       setLoading(false);
     }
@@ -127,16 +116,6 @@ export default function NovoRacha() {
                 value={formData.descricao}
                 onChange={handleChange}
                 className="min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="local">Local</Label>
-              <Input
-                id="local"
-                placeholder="Ex: Arena Soccer, Campo do Clube..."
-                value={formData.local}
-                onChange={handleChange}
               />
             </div>
 

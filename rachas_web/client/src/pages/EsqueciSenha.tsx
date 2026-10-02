@@ -52,7 +52,7 @@ export default function EsqueciSenha() {
                     </CardHeader>
                     <CardContent>
                         {success ? (
-                            <Alert className="bg-green-500/10 text-green-600 border-green-500/50">
+                            <Alert className="bg-success/10 text-success border-success/40">
                                 <FaEnvelope className="h-4 w-4" />
                                 <AlertDescription>
                                     Verifique sua caixa de entrada e a pasta de spam. Enviamos um link para você redefinir sua senha.

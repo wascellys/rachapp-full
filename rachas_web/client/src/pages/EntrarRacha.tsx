@@ -14,6 +14,8 @@ import {
 import { FaSignInAlt, FaArrowLeft, FaSearch } from "react-icons/fa";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { formatarData, mensagemErro } from "@/lib/format";
 
 export default function EntrarRacha() {
   const [, setLocation] = useLocation();
@@ -54,18 +56,10 @@ export default function EntrarRacha() {
       setCodigo("");
       carregarSolicitacoes();
     } catch (error: any) {
-      console.error("Erro ao entrar no racha:", error);
-
-      if (error.response?.status === 400 && error.response?.data?.erro === 'Você já tem uma solicitação pendente para este racha') {
-        toast.warning("Você já solicitou entrada neste Racha. Aguarde a aprovação do administrador.");
-      } else if (error.response?.status === 404) {
-        toast.error("Racha não encontrado com este código.");
-      } else if (error.response?.data?.detail) {
-        toast.error(error.response.data.detail);
-      } else if (error.response?.data?.erro) {
-        toast.error(error.response.data.erro);
+      if (error.response?.status === 404) {
+        toast.error("Nenhum racha encontrado com este código. Confira com o administrador.");
       } else {
-        toast.error("Erro ao enviar solicitação. Tente novamente.");
+        toast.error(mensagemErro(error, "Erro ao enviar solicitação. Tente novamente."));
       }
     } finally {
       setLoading(false);
@@ -74,9 +68,9 @@ export default function EntrarRacha() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDENTE': return <span className="text-yellow-600 bg-yellow-100 px-2 py-1 rounded text-xs font-bold">Pendente</span>;
-      case 'ACEITO': return <span className="text-green-600 bg-green-100 px-2 py-1 rounded text-xs font-bold">Aceito</span>;
-      case 'NEGADO': return <span className="text-red-600 bg-red-100 px-2 py-1 rounded text-xs font-bold">Negado</span>;
+      case 'PENDENTE': return <Badge variant="warning">⏳ Pendente</Badge>;
+      case 'ACEITO': return <Badge variant="live">✓ Aceito</Badge>;
+      case 'NEGADO': return <Badge variant="danger">✕ Negado</Badge>;
       default: return status;
     }
   };
@@ -111,23 +105,25 @@ export default function EntrarRacha() {
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="codigo"
-                  placeholder="Ex: RACHA-1234"
+                  placeholder="Ex: X7K2P"
                   value={codigo}
-                  onChange={e => setCodigo(e.target.value.toUpperCase())}
-                  className="pl-10 text-center font-mono text-lg tracking-wider uppercase"
+                  onChange={e => setCodigo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                  className="pl-10 text-center font-mono text-2xl font-black tracking-[0.4em] uppercase"
                   required
-                  maxLength={10}
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  maxLength={5}
                 />
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                O código geralmente tem 6 a 10 caracteres alfanuméricos.
+                O código tem 5 letras/números e aparece na página do racha.
               </p>
             </div>
 
             <Button
               type="submit"
               className="w-full h-12 text-lg"
-              disabled={loading || !codigo}
+              disabled={loading || codigo.length !== 5}
             >
               {loading ? "Enviando solicitação..." : "Solicitar Entrada"}
             </Button>
@@ -155,10 +151,10 @@ export default function EntrarRacha() {
           <CardContent>
             <div className="space-y-4">
               {solicitacoes.map((s: any) => (
-                <div key={s.id} className="flex justify-between items-center p-3 border rounded bg-muted/20">
+                <div key={s.id} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-border bg-muted/30 p-3">
                   <div>
-                    <p className="font-medium">Racha: {s.racha_details?.nome || s.racha_codigo || s.racha}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(s.criado_em).toLocaleDateString()}</p>
+                    <p className="font-bold">{s.racha?.nome ?? "Racha"}</p>
+                    <p className="text-xs text-muted-foreground">Enviada em {formatarData(s.criado_em)}</p>
                   </div>
                   <div>
                     {getStatusBadge(s.status)}

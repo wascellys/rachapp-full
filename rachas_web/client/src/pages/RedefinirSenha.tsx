@@ -106,7 +106,7 @@ export default function RedefinirSenha() {
                     </CardHeader>
                     <CardContent>
                         {success ? (
-                            <Alert className="bg-green-500/10 text-green-600 border-green-500/50 mt-2">
+                            <Alert className="bg-success/10 text-success border-success/40 mt-2">
                                 <FaCheckCircle className="h-4 w-4" />
                                 <AlertDescription className="ml-2">
                                     Sua senha foi alterada com sucesso! Redirecionando para o login...

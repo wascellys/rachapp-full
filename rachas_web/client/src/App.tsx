@@ -104,12 +104,6 @@ function Router() {
         </Layout>
       </Route>
 
-      <Route path="/premios">
-        <Layout>
-          <div>Prêmios em breve</div>
-        </Layout>
-      </Route>
-
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

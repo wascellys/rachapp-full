@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.contrib.admin import RelatedOnlyFieldListFilter
-from django.contrib.auth.tokens import default_token_generator
-from django.conf import settings
 from allauth.account.adapter import get_adapter
+from allauth.account.forms import default_token_generator
 from allauth.account.utils import user_pk_to_url_str
+from .serializers import frontend_password_reset_url
 from .models import (
     User, Racha, JogadoresRacha, Premio, Partida,
     JogadorPartida, RegistroPartida, PremioPartida, SolicitacaoRacha
@@ -49,8 +49,7 @@ class UserAdmin(admin.ModelAdmin):
 
             uid = user_pk_to_url_str(usuario)
             key = default_token_generator.make_token(usuario)
-            frontend_url = settings.FRONTEND_URL.rstrip('/')
-            reset_url = f"{frontend_url}/redefinir-senha/{uid}/{key}"
+            reset_url = frontend_password_reset_url(request, usuario, key)
             context = {
                 'user': usuario,
                 'uid': uid,

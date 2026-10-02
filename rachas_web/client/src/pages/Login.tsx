@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { FaFutbol, FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaFutbol } from 'react-icons/fa';
 import { Link } from 'wouter';
 
 export default function Login() {
@@ -22,8 +22,14 @@ export default function Login() {
     try {
       await login({ username, password });
       window.location.href = '/';
-    } catch (err) {
-      setError('Usuário ou senha incorretos');
+    } catch (err: any) {
+      setError(
+        err?.response?.status === 401
+          ? 'Usuário ou senha incorretos.'
+          : err?.response
+            ? 'Não foi possível entrar agora. Tente novamente.'
+            : 'Sem conexão com o servidor. Verifique sua internet.'
+      );
     } finally {
       setLoading(false);
     }
@@ -53,7 +59,9 @@ export default function Login() {
                   id="username"
                   placeholder="Seu nome de usuário"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value.trim())}
+                  autoComplete="username"
+                  autoCapitalize="none"
                   required
                 />
               </div>
@@ -68,11 +76,12 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   required
                 />
               </div>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p role="alert" className="rounded-xl border-2 border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>}
 
               <Button type="submit" className="w-full font-semibold" disabled={loading}>
                 {loading ? 'Entrando...' : 'Entrar'}

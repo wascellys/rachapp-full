@@ -22,6 +22,8 @@ import {
 import { FaEdit, FaArrowLeft, FaTrash } from "react-icons/fa";
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
+import { mensagemErro, nomeCompleto } from "@/lib/format";
+import { invalidateRachaCache } from "@/lib/useRachaCache";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,11 +48,6 @@ export default function EditarRacha() {
   const [formData, setFormData] = useState({
     nome: "",
     descricao: "",
-    dia_semana: "",
-    horario: "",
-    local: "",
-    valor_mensal: "",
-    limite_jogadores: "",
     ponto_gol: "",
     ponto_assistencia: "",
     ponto_presenca: "",
@@ -69,11 +66,6 @@ export default function EditarRacha() {
         setFormData({
           nome: data.nome || "",
           descricao: data.descricao || "",
-          dia_semana: data.dia_semana || "",
-          horario: data.horario || "",
-          local: data.local || "",
-          valor_mensal: data.valor_mensal?.toString() || "",
-          limite_jogadores: data.limite_jogadores?.toString() || "20",
           ponto_gol: data.ponto_gol?.toString() || "1",
           ponto_assistencia: data.ponto_assistencia?.toString() || "1",
           ponto_presenca: data.ponto_presenca?.toString() || "1",
@@ -81,11 +73,15 @@ export default function EditarRacha() {
         });
         
         // Carregar jogadores para seleção de admin
+        if (!data.is_admin) {
+          toast.error("Apenas administradores podem editar o racha.");
+          setLocation(`/racha/${id}`);
+          return;
+        }
         const jogadoresRes = await api.get(`/rachas/${id}/jogadores/`);
-        setJogadores(jogadoresRes.data);
+        setJogadores(jogadoresRes.data.filter((j: any) => j.ativo));
       } catch (error) {
-        console.error("Erro ao carregar racha:", error);
-        toast.error("Erro ao carregar dados do racha.");
+        toast.error(mensagemErro(error, "Erro ao carregar dados do racha."));
         setLocation("/");
       } finally {
         setLoading(false);
@@ -110,12 +106,14 @@ export default function EditarRacha() {
     setSaving(true);
 
     try {
+      if (formData.administradores_ids.length === 0) {
+        toast.error("O racha precisa de pelo menos um administrador.");
+        setSaving(false);
+        return;
+      }
       const payload = {
-        ...formData,
-        valor_mensal: formData.valor_mensal
-          ? parseFloat(formData.valor_mensal)
-          : 0,
-        limite_jogadores: parseInt(formData.limite_jogadores),
+        nome: formData.nome.trim(),
+        descricao: formData.descricao,
         ponto_gol: parseInt(formData.ponto_gol),
         ponto_assistencia: parseInt(formData.ponto_assistencia),
         ponto_presenca: parseInt(formData.ponto_presenca),
@@ -123,11 +121,11 @@ export default function EditarRacha() {
       };
 
       await api.patch(`/rachas/${id}/`, payload);
+      invalidateRachaCache(id!);
       toast.success("Racha atualizado com sucesso!");
       setLocation(`/racha/${id}`);
     } catch (error: any) {
-      console.error("Erro ao atualizar racha:", error);
-      toast.error(error.response?.data?.detail || "Erro ao atualizar racha.");
+      toast.error(mensagemErro(error, "Erro ao atualizar racha."));
     } finally {
       setSaving(false);
     }
@@ -136,11 +134,11 @@ export default function EditarRacha() {
   const handleDelete = async () => {
     try {
       await api.delete(`/rachas/${id}/`);
+      invalidateRachaCache(id!);
       toast.success("Racha excluído com sucesso.");
       setLocation("/");
     } catch (error) {
-      console.error("Erro ao excluir racha:", error);
-      toast.error("Erro ao excluir racha.");
+      toast.error(mensagemErro(error, "Erro ao excluir racha."));
     }
   };
 
@@ -242,15 +240,6 @@ export default function EditarRacha() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="local">Local</Label>
-              <Input
-                id="local"
-                value={formData.local}
-                onChange={handleChange}
-              />
-            </div>
-
             <div className="border-t pt-4 mt-4">
               <h3 className="text-lg font-semibold mb-4">
                 Configuração de Pontuação
@@ -295,7 +284,8 @@ export default function EditarRacha() {
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <h3 className="text-lg font-semibold mb-4">Administradores</h3>
+              <h3 className="text-lg font-semibold mb-1">Administradores</h3>
+              <p className="mb-3 text-sm text-muted-foreground">Administradores criam partidas, registram gols e aprovam novos jogadores.</p>
                <div className="space-y-3 max-h-60 overflow-y-auto p-2 border rounded-md">
                 {jogadores.map((item) => (
                   <div key={item.jogador.id} className="flex items-center space-x-2">
@@ -321,7 +311,7 @@ export default function EditarRacha() {
                       htmlFor={`admin-${item.jogador.id}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      {item.jogador.first_name} {item.jogador.last_name} ({item.jogador.username})
+                      {nomeCompleto(item.jogador)} <span className="text-muted-foreground">@{item.jogador.username}</span>
                     </label>
                   </div>
                 ))}

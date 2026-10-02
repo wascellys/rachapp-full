@@ -21,6 +21,7 @@ import {
 import { FaFutbol, FaArrowLeft } from "react-icons/fa";
 import { Link } from "wouter";
 import api from "@/lib/api";
+import { mensagemErro, POSICOES } from "@/lib/format";
 
 export default function Register() {
   const { login } = useAuth();
@@ -83,10 +84,7 @@ export default function Register() {
       await login({ username: formData.username, password: formData.password });
       window.location.href = "/";
     } catch (err: any) {
-      console.error(err);
-      setError(
-        err.response?.data?.detail || "Erro ao criar conta. Verifique os dados."
-      );
+      setError(mensagemErro(err, "Erro ao criar conta. Verifique os dados."));
     } finally {
       setLoading(false);
     }
@@ -152,8 +150,11 @@ export default function Register() {
                   id="username"
                   value={formData.username}
                   onChange={handleChange}
+                  autoComplete="username"
+                  placeholder="ex.: joao-silva"
                   required
                 />
+                <p className="text-xs text-muted-foreground">É com ele que você entra no app.</p>
               </div>
 
               <div className="space-y-2">
@@ -187,10 +188,9 @@ export default function Register() {
                       <SelectValue placeholder="Selecione sua posição" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="GOLEIRO">Goleiro</SelectItem>
-                      <SelectItem value="DEFENSOR">Defensor</SelectItem>
-                      <SelectItem value="MEIA">Meia</SelectItem>
-                      <SelectItem value="ATACANTE">Atacante</SelectItem>
+                      {POSICOES.map(p => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -204,8 +204,11 @@ export default function Register() {
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
+                    autoComplete="new-password"
+                    minLength={8}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">Mínimo de 8 caracteres, não use só números.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirmar Senha</Label>
@@ -214,13 +217,14 @@ export default function Register() {
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    autoComplete="new-password"
                     required
                   />
                 </div>
               </div>
 
               {error && (
-                <p className="text-sm text-destructive font-medium">{error}</p>
+                <p role="alert" className="rounded-xl border-2 border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive">{error}</p>
               )}
 
               <Button

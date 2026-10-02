@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,17 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  FaFutbol,
-  FaArrowLeft,
-  FaPlus,
-  FaTimes,
-  FaUserPlus,
-  FaFlagCheckered,
-  FaHistory,
-  FaTrophy,
-} from "react-icons/fa";
-import { TbSettings, TbTrash, TbCircleCheckFilled } from "react-icons/tb";
+import { FaFutbol, FaArrowLeft, FaUserPlus, FaFlagCheckered, FaHistory, FaTrophy, FaHandshake, FaUserMinus } from "react-icons/fa";
+import { TbSettings, TbTrash } from "react-icons/tb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +32,11 @@ import {
 import { Link, useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SelectPremioModal } from "@/components/SelectPremioModal";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { invalidateRachaCache } from "@/lib/useRachaCache";
+import { dataPartida, formatarData, iniciais, mensagemErro, nomeCompleto, posicaoLabel, primeiroNome } from "@/lib/format";
 
 interface Jogador {
   id: string;
@@ -54,109 +50,127 @@ interface Jogador {
 interface JogadorPartida {
   id: string;
   jogador: Jogador;
-  time: string;
   presente: boolean;
-  gols: number;
-  assistencias: number;
 }
 
-import { SelectPremioModal } from "@/components/SelectPremioModal";
-import { MultiSelect } from "@/components/ui/multi-select";
+interface Partida {
+  id: string;
+  racha: string;
+  status: boolean;
+  data_inicio: string | null;
+  criado_em: string;
+  local: string | null;
+  racha_is_admin: boolean;
+  registros: { id: string; jogador_gol: Jogador | null; jogador_assistencia: Jogador | null }[];
+  premios_partida: { id: string; jogador: Jogador }[];
+}
 
 export default function GerenciarPartida() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/partida/:id/gerenciar");
   const partidaId = params?.id;
+  const [confirm, confirmDialog] = useConfirm();
 
   const [loading, setLoading] = useState(true);
-  const [partida, setPartida] = useState<any>(null);
-  const [jogadoresPartida, setJogadoresPartida] = useState<JogadorPartida[]>(
-    []
-  );
-  const [jogadoresDisponiveis, setJogadoresDisponiveis] = useState<Jogador[]>(
-    []
-  );
+  const [erro, setErro] = useState<string | null>(null);
+  const [partida, setPartida] = useState<Partida | null>(null);
+  const [jogadoresPartida, setJogadoresPartida] = useState<JogadorPartida[]>([]);
+  const [jogadoresDisponiveis, setJogadoresDisponiveis] = useState<Jogador[]>([]);
+  const [salvando, setSalvando] = useState(false);
 
-  // Estados para modais
   const [showAddJogador, setShowAddJogador] = useState(false);
   const [showRegistrarGol, setShowRegistrarGol] = useState(false);
   const [showSelectPremio, setShowSelectPremio] = useState(false);
   const [selectedJogadoresIds, setSelectedJogadoresIds] = useState<string[]>([]);
-  const [selectedAssistenciaId, setSelectedAssistenciaId] =
-    useState<string>("none");
+  const [selectedAssistenciaId, setSelectedAssistenciaId] = useState<string>("none");
   const [jogadorGol, setJogadorGol] = useState<JogadorPartida | null>(null);
   const [jogadorPremio, setJogadorPremio] = useState<JogadorPartida | null>(null);
 
   useEffect(() => {
-    if (partidaId) {
-      carregarDados();
-    }
+    if (partidaId) carregarDados(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partidaId]);
 
-  const carregarDados = async () => {
+  const carregarDados = async (inicial = false) => {
     try {
-      setLoading(true);
-      // Carregar detalhes da partida
-      const partidaRes = await api.get(`/partidas/${partidaId}/`);
-      setPartida(partidaRes.data);
+      if (inicial) setLoading(true);
+      const [partidaRes, jogadoresPartidaRes] = await Promise.all([
+        api.get(`/partidas/${partidaId}/`),
+        api.get(`/partidas/${partidaId}/jogadores/`),
+      ]);
+      const p: Partida = partidaRes.data;
+      setPartida(p);
 
-      // Carregar jogadores já na partida
-      const jogadoresPartidaRes = await api.get(
-        `/partidas/${partidaId}/jogadores/`
+      const presentes: JogadorPartida[] = jogadoresPartidaRes.data;
+      presentes.sort((a, b) => nomeCompleto(a.jogador).localeCompare(nomeCompleto(b.jogador)));
+      setJogadoresPartida(presentes);
+
+      const todosRes = await api.get(`/rachas/${p.racha}/jogadores/`);
+      const idsNaPartida = new Set(presentes.map(jp => String(jp.jogador.id)));
+      setJogadoresDisponiveis(
+        todosRes.data
+          .filter((jr: any) => jr.ativo)
+          .map((jr: any) => jr.jogador as Jogador)
+          .filter((j: Jogador) => !idsNaPartida.has(String(j.id)))
+          .sort((a: Jogador, b: Jogador) => nomeCompleto(a).localeCompare(nomeCompleto(b)))
       );
-      setJogadoresPartida(
-        jogadoresPartidaRes.data.sort((a: any, b: any) =>
-          (a.jogador.first_name || "").localeCompare(b.jogador.first_name || "")
-        )
-      );
-
-      // Carregar todos os jogadores do racha para adicionar
-      const rachaId = partidaRes.data.racha;
-      const todosJogadoresRes = await api.get(`/rachas/${rachaId}/jogadores/`);
-
-      // Filtrar apenas os que NÃO estão na partida
-      const idsNaPartida = new Set(
-        jogadoresPartidaRes.data.map((jp: any) => String(jp.jogador.id))
-      );
-
-      // Mapear corretamente a resposta da API de jogadores do racha
-      // A API retorna JogadoresRacha, que tem o campo 'jogador'
-      const todosJogadores = todosJogadoresRes.data.map(
-        (jr: any) => jr.jogador
-      );
-
-      const disponiveis = todosJogadores
-        .filter((j: any) => !idsNaPartida.has(String(j.id)))
-        .sort((a: any, b: any) =>
-          (a.first_name || "").localeCompare(b.first_name || "")
-        );
-
-      console.log("Jogadores disponíveis:", disponiveis); // Debug
-      setJogadoresDisponiveis(disponiveis);
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar dados da partida.");
+      setErro(null);
+    } catch (error: any) {
+      setErro(error?.response?.status === 404 ? "Partida não encontrada." : mensagemErro(error, "Erro ao carregar a partida."));
     } finally {
       setLoading(false);
     }
   };
 
+  // Gols/assistências/prêmios de cada jogador nesta partida
+  const resumo = useMemo(() => {
+    const mapa = new Map<string, { gols: number; assistencias: number; premios: number }>();
+    const get = (id: string) => mapa.get(id) ?? mapa.set(id, { gols: 0, assistencias: 0, premios: 0 }).get(id)!;
+    partida?.registros.forEach(r => {
+      if (r.jogador_gol) get(r.jogador_gol.id).gols++;
+      if (r.jogador_assistencia) get(r.jogador_assistencia.id).assistencias++;
+    });
+    partida?.premios_partida.forEach(p => get(p.jogador.id).premios++);
+    return mapa;
+  }, [partida]);
+
+  const aposAlteracao = () => {
+    if (partida) invalidateRachaCache(partida.racha);
+    carregarDados();
+  };
+
   const adicionarJogador = async () => {
     if (selectedJogadoresIds.length === 0) return;
-
+    setSalvando(true);
     try {
-      await api.post(`/partidas/${partidaId}/adicionar_jogador/`, {
-        jogadores_ids: selectedJogadoresIds,
-        time: "A", // Padrão
-        presente: true,
-      });
-
-      toast.success("Jogadores adicionados!");
+      const res = await api.post(`/partidas/${partidaId}/adicionar_jogador/`, { jogadores_ids: selectedJogadoresIds });
+      const adicionados = res.data?.jogadores?.length ?? 0;
+      toast.success(`${adicionados} ${adicionados === 1 ? "jogador adicionado" : "jogadores adicionados"}!`);
+      (res.data?.erros ?? []).forEach((e: string) => toast.warning(e));
       setShowAddJogador(false);
       setSelectedJogadoresIds([]);
-      carregarDados(); // Recarrega tudo
-    } catch (error: any) {
-      toast.error("Erro ao adicionar jogadores.");
+      aposAlteracao();
+    } catch (error) {
+      toast.error(mensagemErro(error, "Erro ao adicionar jogadores."));
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const removerDaPartida = async (jp: JogadorPartida) => {
+    const ok = await confirm({
+      title: `Remover ${primeiroNome(jp.jogador)} da partida?`,
+      description: "Ele deixa de contar presença nesta partida. Gols já registrados continuam na linha do tempo.",
+      confirmText: "Remover",
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await api.post(`/partidas/${partidaId}/registrar_presenca/`, { jogador_id: jp.jogador.id, presente: false });
+      toast.success(`${primeiroNome(jp.jogador)} removido da partida.`);
+      aposAlteracao();
+    } catch (error) {
+      toast.error(mensagemErro(error, "Erro ao remover jogador."));
     }
   };
 
@@ -166,223 +180,218 @@ export default function GerenciarPartida() {
     setShowRegistrarGol(true);
   };
 
-  const abrirModalPremio = (jogador: JogadorPartida) => {
-    setJogadorPremio(jogador);
-    setShowSelectPremio(true);
-  };
-
   const registrarGol = async () => {
+    setSalvando(true);
     try {
-      const payload: any = {
-        jogador_gol_id: jogadorGol ? jogadorGol.jogador.id : null,
-        minuto: 0, // Opcional
-      };
-
-      if (selectedAssistenciaId && selectedAssistenciaId !== "none") {
-        payload.jogador_assistencia_id = selectedAssistenciaId;
-      }
-
+      const payload: Record<string, string | null> = { jogador_gol_id: jogadorGol ? jogadorGol.jogador.id : null };
+      if (selectedAssistenciaId !== "none") payload.jogador_assistencia_id = selectedAssistenciaId;
       await api.post(`/partidas/${partidaId}/registrar_gol/`, payload);
-
-      const nomeAutor = jogadorGol ? jogadorGol.jogador.first_name : "Anônimo/Outro";
-      toast.success(`Gol de ${nomeAutor} registrado!`);
+      toast.success(`⚽ Gol de ${jogadorGol ? primeiroNome(jogadorGol.jogador) : "jogador não identificado"}!`);
       setShowRegistrarGol(false);
-      carregarDados(); // Atualiza placar e estatísticas
-    } catch (error: any) {
-      console.error(error);
-      toast.error("Erro ao registrar gol.");
+      aposAlteracao();
+    } catch (error) {
+      toast.error(mensagemErro(error, "Erro ao registrar gol."));
+    } finally {
+      setSalvando(false);
     }
   };
 
   const finalizarPartida = async () => {
-    if (
-      !confirm(
-        "Tem certeza que deseja finalizar a partida? Isso atualizará o ranking."
-      )
-    )
-      return;
-
+    const ok = await confirm({
+      title: "Finalizar a partida?",
+      description: "A partida fica marcada como encerrada. Você ainda poderá corrigir lances pela linha do tempo.",
+      confirmText: "Finalizar",
+    });
+    if (!ok || !partida) return;
     try {
       await api.post(`/partidas/${partidaId}/finalizar/`);
-      toast.success("Partida finalizada com sucesso!");
-      setLocation(`/racha/${partida.racha}`);
+      invalidateRachaCache(partida.racha);
+      toast.success("Partida finalizada!");
+      setLocation(`/racha/${partida.racha}?tab=partidas`);
     } catch (error) {
-      toast.error("Erro ao finalizar partida.");
+      toast.error(mensagemErro(error, "Erro ao finalizar partida."));
+    }
+  };
+
+  const excluirPartida = async () => {
+    const ok = await confirm({
+      title: "Excluir esta partida?",
+      description: "Todos os gols, presenças e prêmios desta partida serão apagados e o ranking será recalculado.",
+      confirmText: "Excluir partida",
+      destructive: true,
+    });
+    if (!ok || !partida) return;
+    try {
+      await api.delete(`/partidas/${partidaId}/`);
+      invalidateRachaCache(partida.racha);
+      toast.success("Partida excluída.");
+      setLocation(`/racha/${partida.racha}?tab=partidas`);
+    } catch (error) {
+      toast.error(mensagemErro(error, "Erro ao excluir partida."));
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto py-0 space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-32" />
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-10" />
-          </div>
-        </div>
-        <div className="rounded-xl border shadow-sm">
-          <div className="p-6 flex justify-between">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-9 w-32" />
-          </div>
-          <div className="p-6 pt-0 space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </div>
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Skeleton className="h-10 w-40 rounded-full" />
+        <Skeleton className="h-36 w-full rounded-3xl" />
+        <Skeleton className="h-72 w-full rounded-3xl" />
       </div>
     );
   }
 
+  if (!partida || erro) {
+    return (
+      <Card className="mx-auto max-w-md text-center">
+        <CardContent className="space-y-4 py-10">
+          <p className="font-bold">{erro || "Partida não encontrada."}</p>
+          <Link href="/"><Button variant="outline">Voltar</Button></Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!partida.racha_is_admin) {
+    return (
+      <Card className="mx-auto max-w-md text-center">
+        <CardContent className="space-y-4 py-10">
+          <p className="font-bold">Apenas administradores do racha podem gerenciar partidas.</p>
+          <Link href={`/partida/${partidaId}/timeline`}><Button>Ver lances da partida</Button></Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const emAndamento = partida.status;
+  const totalGols = partida.registros.length;
+  const totalAssist = partida.registros.filter(r => r.jogador_assistencia).length;
+
   return (
-    <div className="max-w-4xl mx-auto py-0 space-y-6">
-      {/* Header da Partida */}
-      <div className="flex items-center justify-between">
-        <Link href={`/racha/${partida.racha}`}>
-          <Button variant="ghost" className="pl-0">
-            <FaArrowLeft className="mr-2" /> Voltar
-          </Button>
+    <div className="mx-auto max-w-4xl space-y-6">
+      {confirmDialog}
+
+      <div className="flex items-center justify-between gap-2">
+        <Link href={`/racha/${partida.racha}?tab=partidas`}>
+          <Button variant="ghost" className="pl-2"><FaArrowLeft /> Voltar</Button>
         </Link>
         <div className="flex gap-2">
           <Link href={`/partida/${partidaId}/timeline`}>
-            <Button variant="outline" className="gap-2">
-              <FaHistory /> Linha do Tempo
-            </Button>
+            <Button variant="outline"><FaHistory /> <span className="hidden sm:inline">Linha do tempo</span></Button>
           </Link>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <TbSettings />
-              </Button>
+              <Button variant="outline" size="icon" aria-label="Ações da partida"><TbSettings /></Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações da Partida</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="rounded-2xl">
+              <DropdownMenuLabel>Ações da partida</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {partida.status !== "FINALIZADA" && (
-                <DropdownMenuItem
-                  onClick={finalizarPartida}
-                  className="text-yellow-600 cursor-pointer"
-                >
-                  <FaFlagCheckered className="mr-2" /> Finalizar Partida
+              {emAndamento && (
+                <DropdownMenuItem onClick={finalizarPartida} className="cursor-pointer font-bold">
+                  <FaFlagCheckered className="mr-2" /> Finalizar partida
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                className="text-destructive cursor-pointer"
-                onClick={() => {
-                  if (
-                    confirm(
-                      "Tem certeza que deseja excluir esta partida? Todos os registros serão perdidos."
-                    )
-                  ) {
-                    api.delete(`/partidas/${partidaId}/`).then(() => {
-                      toast.success("Partida excluída");
-                      setLocation(`/racha/${partida.racha}`);
-                    });
-                  }
-                }}
-              >
-                <TbTrash className="mr-2" /> Excluir Partida
+              <DropdownMenuItem className="cursor-pointer font-bold text-destructive focus:text-destructive" onClick={excluirPartida}>
+                <TbTrash className="mr-2" /> Excluir partida
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Lista de Jogadores */}
+      {/* Placar */}
+      <section className="relative overflow-hidden rounded-3xl border-2 border-border bg-card p-5 md:p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black">Partida de {formatarData(dataPartida(partida))}</h1>
+              {emAndamento ? (
+                <Badge variant="live"><span className="size-1.5 animate-pulse rounded-full bg-success" /> Ao vivo</Badge>
+              ) : (
+                <Badge variant="muted">Encerrada</Badge>
+              )}
+            </div>
+            {partida.local && <p className="text-sm font-semibold text-muted-foreground">{partida.local}</p>}
+          </div>
+          <div className="flex gap-6">
+            {[
+              { label: "Gols", valor: totalGols },
+              { label: "Assist.", valor: totalAssist },
+              { label: "Presentes", valor: jogadoresPartida.length },
+            ].map(i => (
+              <div key={i.label} className="text-center">
+                <p className="text-3xl font-black tabular-nums">{i.valor}</p>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">{i.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {!emAndamento && (
+          <p className="mt-4 rounded-2xl bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground">
+            Esta partida foi encerrada. Para corrigir um lance, use a linha do tempo.
+          </p>
+        )}
+      </section>
+
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-          <CardTitle className="text-xl">Jogadores Presentes</CardTitle>
-          {partida.status !== "FINALIZADA" && (
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button size="sm" variant="outline" onClick={() => abrirModalGol(null)} className="border-dashed flex-1 sm:flex-none">
-                <FaFutbol className="mr-2" /> Gol Anônimo / Outro
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-xl">Jogadores presentes</CardTitle>
+          {emAndamento && (
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+              <Button size="sm" variant="outline" onClick={() => abrirModalGol(null)} className="flex-1 border-dashed sm:flex-none">
+                <FaFutbol /> Gol não identificado
               </Button>
-              <Button size="sm" onClick={() => setShowAddJogador(true)} className="flex-1 sm:flex-none">
-                <FaUserPlus className="mr-2" /> Adicionar Jogador
+              <Button size="sm" onClick={() => setShowAddJogador(true)} className="flex-1 sm:flex-none" disabled={jogadoresDisponiveis.length === 0}>
+                <FaUserPlus /> Adicionar jogadores
               </Button>
             </div>
           )}
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {jogadoresPartida.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhum jogador adicionado ainda.
-              </p>
-            ) : (
-              jogadoresPartida.map(jp => (
-                <div
-                  key={jp.id}
-                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border hover:border-primary/30 transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Avatar>
-                      <AvatarImage src={jp.jogador.imagem_perfil || undefined} />
-                      <AvatarFallback>
-                        {jp.jogador.first_name[0]}
-                      </AvatarFallback>
+          {jogadoresPartida.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="font-bold text-muted-foreground">Nenhum jogador na partida ainda.</p>
+              {emAndamento && (
+                <Button onClick={() => setShowAddJogador(true)}><FaUserPlus /> Adicionar quem veio</Button>
+              )}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {jogadoresPartida.map(jp => {
+                const r = resumo.get(jp.jogador.id);
+                return (
+                  <li key={jp.id} className="flex items-center gap-3 rounded-2xl border-2 border-border bg-muted/30 p-3 transition-colors hover:border-primary/40">
+                    <Avatar className="size-11 shrink-0 rounded-full">
+                      <AvatarImage src={jp.jogador.imagem_perfil || undefined} className="object-cover" />
+                      <AvatarFallback className="bg-muted font-black">{iniciais(nomeCompleto(jp.jogador))}</AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">
-                        {jp.jogador.first_name} {jp.jogador.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {jp.jogador.posicao}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold">{nomeCompleto(jp.jogador)}</p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-bold text-muted-foreground">
+                        <span>{posicaoLabel(jp.jogador.posicao)}</span>
+                        {r?.gols ? <span className="inline-flex items-center gap-1 text-foreground"><FaFutbol aria-hidden /> {r.gols} {r.gols === 1 ? "gol" : "gols"}</span> : null}
+                        {r?.assistencias ? <span className="inline-flex items-center gap-1 text-foreground"><FaHandshake aria-hidden /> {r.assistencias} assist.</span> : null}
+                        {r?.premios ? <span className="inline-flex items-center gap-1 text-gold"><FaTrophy aria-hidden /> {r.premios}</span> : null}
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    {/* Estatísticas Rápidas */}
-                    <div className="flex gap-3 text-sm">
-                      {jp.gols > 0 && (
-                        <span
-                          className="flex items-center text-green-500 font-bold"
-                          title="Gols"
-                        >
-                          <FaFutbol className="mr-1" /> {jp.gols}
-                        </span>
-                      )}
-                      {jp.assistencias > 0 && (
-                        <span
-                          className="flex items-center text-blue-500 font-bold"
-                          title="Assistências"
-                        >
-                          <TbCircleCheckFilled className="mr-1" /> {jp.assistencias}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Ações */}
-                    {partida.status !== "FINALIZADA" && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-yellow-600 border-yellow-200 hover:bg-yellow-50 hover:text-yellow-700"
-                          onClick={() => abrirModalPremio(jp)}
-                          title="Dar prêmio"
-                        >
-                          <FaTrophy />
+                    {emAndamento && (
+                      <div className="flex shrink-0 gap-1.5">
+                        <Button size="icon" variant="outline" onClick={() => { setJogadorPremio(jp); setShowSelectPremio(true); }} aria-label={`Dar prêmio para ${primeiroNome(jp.jogador)}`} title="Dar prêmio">
+                          <FaTrophy className="text-gold" />
                         </Button>
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => abrirModalGol(jp)}
-                          title="Registrar gol"
-                        >
-                          <FaFutbol className="mr" />
+                        <Button size="icon" onClick={() => abrirModalGol(jp)} aria-label={`Registrar gol de ${primeiroNome(jp.jogador)}`} title="Registrar gol">
+                          <FaFutbol />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => removerDaPartida(jp)} aria-label={`Remover ${primeiroNome(jp.jogador)} da partida`} title="Remover da partida">
+                          <FaUserMinus />
                         </Button>
                       </div>
                     )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
@@ -390,30 +399,21 @@ export default function GerenciarPartida() {
       <Dialog open={showAddJogador} onOpenChange={setShowAddJogador}>
         <DialogContent className="overflow-visible">
           <DialogHeader>
-            <DialogTitle>Adicionar Jogadores à Partida</DialogTitle>
-            <DialogDescription>
-              Selecione os jogadores do racha para participar.
-            </DialogDescription>
+            <DialogTitle>Adicionar jogadores à partida</DialogTitle>
+            <DialogDescription>Selecione quem está presente hoje.</DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
             <MultiSelect
-              options={jogadoresDisponiveis.map(j => ({
-                value: j.id,
-                label: `${j.first_name} ${j.last_name}`.trim() || j.username,
-              }))}
+              options={jogadoresDisponiveis.map(j => ({ value: j.id, label: nomeCompleto(j) }))}
               selected={selectedJogadoresIds}
               onChange={setSelectedJogadoresIds}
               placeholder="Selecione os jogadores..."
             />
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddJogador(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={adicionarJogador} disabled={selectedJogadoresIds.length === 0}>
-              Adicionar
+            <Button variant="outline" onClick={() => setShowAddJogador(false)}>Cancelar</Button>
+            <Button onClick={adicionarJogador} disabled={selectedJogadoresIds.length === 0 || salvando}>
+              {salvando ? "Adicionando..." : `Adicionar${selectedJogadoresIds.length ? ` (${selectedJogadoresIds.length})` : ""}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -423,72 +423,41 @@ export default function GerenciarPartida() {
       <Dialog open={showRegistrarGol} onOpenChange={setShowRegistrarGol}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Registrar Gol</DialogTitle>
+            <DialogTitle>Registrar gol</DialogTitle>
             <DialogDescription>
-              Gol de{" "}
-              <strong>
-                {jogadorGol ? `${jogadorGol.jogador.first_name} ${jogadorGol.jogador.last_name}` : "Anônimo / Outro"}
-              </strong>
-              . Quem deu a assistência?
+              Gol de <strong>{jogadorGol ? nomeCompleto(jogadorGol.jogador) : "jogador não identificado"}</strong>. Quem deu a assistência?
             </DialogDescription>
           </DialogHeader>
-
           <div className="py-4">
-            <label className="text-sm font-medium mb-2 block">
-              Assistência (Opcional)
-            </label>
-            <Select
-              value={selectedAssistenciaId}
-              onValueChange={setSelectedAssistenciaId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sem assistência / Jogada individual" />
-              </SelectTrigger>
+            <label className="mb-2 block text-sm font-bold">Assistência (opcional)</label>
+            <Select value={selectedAssistenciaId} onValueChange={setSelectedAssistenciaId}>
+              <SelectTrigger><SelectValue placeholder="Sem assistência" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">
-                  Sem assistência / Jogada individual
-                </SelectItem>
+                <SelectItem value="none">Sem assistência / jogada individual</SelectItem>
                 {jogadoresPartida
-                  .filter(jp => !jogadorGol || jp.jogador.id !== jogadorGol.jogador.id) // Não pode dar assistência pra si mesmo
+                  .filter(jp => !jogadorGol || jp.jogador.id !== jogadorGol.jogador.id)
                   .map(jp => (
-                    <SelectItem key={jp.jogador.id} value={jp.jogador.id}>
-                      {jp.jogador.first_name} {jp.jogador.last_name}
-                    </SelectItem>
+                    <SelectItem key={jp.jogador.id} value={jp.jogador.id}>{nomeCompleto(jp.jogador)}</SelectItem>
                   ))}
               </SelectContent>
             </Select>
           </div>
-
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowRegistrarGol(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={registrarGol}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <FaFutbol className="mr-2" /> Confirmar Gol
-            </Button>
+            <Button variant="outline" onClick={() => setShowRegistrarGol(false)}>Cancelar</Button>
+            <Button onClick={registrarGol} disabled={salvando}><FaFutbol /> {salvando ? "Salvando..." : "Confirmar gol"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Selecionar Premio */}
       {jogadorPremio && (
         <SelectPremioModal
           open={showSelectPremio}
           onOpenChange={setShowSelectPremio}
-          rachaId={partida?.racha}
+          rachaId={partida.racha}
           jogadorId={jogadorPremio.jogador.id}
-          jogadorNome={`${jogadorPremio.jogador.first_name} ${jogadorPremio.jogador.last_name}`}
+          jogadorNome={nomeCompleto(jogadorPremio.jogador)}
           partidaId={partidaId!}
-          onSuccess={() => {
-            // Se quisesse recarregar a lista, poderia, mas premios nao aparecem na lista simples por enquanto
-            // carregarDados(); 
-          }}
+          onSuccess={aposAlteracao}
         />
       )}
     </div>

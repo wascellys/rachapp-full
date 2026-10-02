@@ -12,16 +12,19 @@ import { PlayerCard } from "./PlayerCard";
 import { ShareCanvas } from "./ShareCanvas";
 import api from "@/lib/api";
 import { Capacitor } from "@capacitor/core";
+import { Share2 } from "lucide-react";
+import type { PlayerCardData } from "@/lib/playerRating";
 
 interface PlayerCardModalProps {
   children: React.ReactNode;
-  player: any;
+  player: PlayerCardData;
   rachaName?: string;
 }
 
 export function PlayerCardModal({ children, player, rachaName }: PlayerCardModalProps) {
   const shareRef = useRef<HTMLDivElement>(null);
-  const [sharePlayer, setSharePlayer] = React.useState(player);
+  const [sharePlayer, setSharePlayer] = React.useState<PlayerCardData>(player);
+  const [sharing, setSharing] = React.useState(false);
 
   React.useEffect(() => {
     setSharePlayer(player);
@@ -33,7 +36,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
     try {
       toast.info("Gerando imagem...", { duration: 2000 });
 
-      let playerForShare = { ...player };
+      const playerForShare: PlayerCardData = { ...player };
       let photoObjectUrl: string | null = null;
 
       if (player.photo) {
@@ -80,7 +83,8 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
         if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl);
       }
 
-      const fileName = `carta-${player.name.toLowerCase().replace(/\s+/g, '-')}.png`;
+      const slug = (player.username || player.name || "jogador").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-");
+      const fileName = `carta-${slug}.png`;
 
       // --- Ambiente nativo Android/iOS via Capacitor ---
       if (Capacitor.isNativePlatform()) {
@@ -139,6 +143,7 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
       toast.error(error instanceof Error ? `Erro: ${error.message}` : "Erro desconhecido ao compartilhar.");
     } finally {
       setSharePlayer(player);
+      setSharing(false);
     }
   };
 
@@ -146,12 +151,23 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div className="cursor-pointer hover:opacity-80 transition-opacity">
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Ver carta de ${player.name}`}
+          onKeyDown={e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.currentTarget.click();
+            }
+          }}
+          className="cursor-pointer rounded-2xl transition-opacity hover:opacity-90"
+        >
           {children}
         </div>
       </DialogTrigger>
 
-      <DialogContent className="bg-transparent border-none shadow-none p-0 flex flex-col items-center">
+      <DialogContent className="bg-transparent border-none shadow-none p-0 flex flex-col items-center max-w-[320px]">
         <VisuallyHidden>
           <DialogTitle>Carta do Jogador</DialogTitle>
         </VisuallyHidden>
@@ -164,12 +180,12 @@ export function PlayerCardModal({ children, player, rachaName }: PlayerCardModal
           <ShareCanvas ref={shareRef} player={sharePlayer} rachaName={rachaName} />
         </div>
 
-        {/* Botão */}
         <button
           onClick={handleShare}
-          className="mt-2 px-6 py-2 border rounded-full bg-black/80 text-white hover:bg-black transition font-bold text-sm"
+          disabled={sharing}
+          className="mt-1 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-2.5 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-60"
         >
-          Compartilhar
+          <Share2 className="size-4" /> {sharing ? "Gerando imagem..." : "Compartilhar carta"}
         </button>
       </DialogContent>
     </Dialog>

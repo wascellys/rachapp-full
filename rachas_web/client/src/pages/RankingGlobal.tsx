@@ -1,180 +1,148 @@
-
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { FaTrophy, FaMedal } from "react-icons/fa";
+import { FaTrophy } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerCardModal } from "@/components/PlayerCardModal";
+import { Podio } from "@/components/Stats";
+import { iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
+import type { PlayerCardData } from "@/lib/playerRating";
 
 interface RankingGlobalItem {
   posicao: number;
   jogador_id: string;
   jogador_nome: string;
+  jogador_username: string;
   jogador_imagem_perfil: string | null;
   posicao_campo: string;
   pontos: number;
   gols: number;
   assistencias: number;
+  presencas: number;
+}
+
+function carta(item: RankingGlobalItem): PlayerCardData {
+  return {
+    name: item.jogador_nome,
+    username: item.jogador_username,
+    position: item.posicao_campo,
+    points: item.pontos,
+    rank: item.posicao,
+    stats: { matches: item.presencas ?? 0, goals: item.gols, assists: item.assistencias },
+    photo: item.jogador_imagem_perfil,
+  };
 }
 
 export default function RankingGlobal() {
   const [ranking, setRanking] = useState<RankingGlobalItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchRanking = async () => {
-      try {
-        const response = await api.get("/usuarios/ranking_global/");
-        setRanking(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar ranking global:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRanking();
+    api
+      .get("/usuarios/ranking_global/")
+      .then(res => setRanking(res.data))
+      .catch(error => setErro(mensagemErro(error, "Não foi possível carregar o ranking.")))
+      .finally(() => setLoading(false));
   }, []);
-
-  const getMedalColor = (posicao: number) => {
-    switch (posicao) {
-      case 1:
-        return "text-yellow-500";
-      case 2:
-        return "text-gray-400";
-      case 3:
-        return "text-amber-600";
-      default:
-        return "text-muted-foreground";
-    }
-  };
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-12 w-48 rounded-md" />
-        <Card>
-          <CardContent className="p-0">
-             <div className="space-y-4 p-4">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full rounded-xl" />
-                ))}
-             </div>
-          </CardContent>
-        </Card>
+        <Skeleton className="h-12 w-56 rounded-xl" />
+        <Skeleton className="h-56 w-full rounded-2xl" />
+        <Skeleton className="h-80 w-full rounded-2xl" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FaTrophy className="text-primary" /> Ranking Global
+      <div>
+        <h1 className="flex items-center gap-2 text-3xl font-black tracking-tight">
+          <FaTrophy className="text-gold" aria-hidden /> Ranking Global
         </h1>
-        <p className="text-muted-foreground">
-          Os melhores jogadores de todos os tempos em todos os rachas.
-        </p>
+        <p className="text-muted-foreground">Os maiores participantes em gols de todos os rachas do RachApp.</p>
       </div>
 
-      <Card className="border-border">
-        <CardHeader className="bg-muted/30 border-b border-border">
-          <CardTitle className="flex items-center gap-2 text-lg">
-             Classificação Geral (Gols + Assistências)
-          </CardTitle>
-          <CardDescription>
-             Atualizado em tempo real com base em todas as partidas
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {ranking.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Ainda não há dados suficientes para o ranking.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border text-left text-sm text-muted-foreground bg-muted/20">
-                    <th className="py-4 pl-6 w-16 text-center">#</th>
-                    <th className="py-4 px-4">Jogador</th>
-                    <th className="py-4 px-4 text-center">Pts</th>
-                    <th className="py-4 px-4 text-center hidden sm:table-cell">Gols</th>
-                    <th className="py-4 px-4 text-center hidden sm:table-cell">Assists</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((item) => (
-                    <tr
-                      key={item.jogador_id}
-                      className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors group"
-                    >
-                      <td className="py-4 pl-6 text-center">
-                        {item.posicao <= 3 ? (
-                           <FaMedal className={`w-6 h-6 mx-auto ${getMedalColor(item.posicao)}`} />
-                        ) : (
-                           <span className="font-bold text-muted-foreground">{item.posicao}º</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
-                        <PlayerCardModal
-                            player={{
-                              name: item.jogador_nome,
-                              position: item.posicao_campo || "JOG",
-                              overall: item.pontos, // Usando pontos como overall "fake" no global
-                              stats: {
-                                matches: 0, // Não temos matches global na API ainda, então 0 ou omitir
-                                goals: item.gols,
-                                assists: item.assistencias,
-                              },
-                              photo: item.jogador_imagem_perfil,
-                            }}
-                          >
-                          <div className="flex items-center gap-3 cursor-pointer">
-                            <Avatar className="h-10 w-10 md:h-12 md:w-12 border-2 border-transparent group-hover:border-primary transition-all bg-background rounded-full">
-                              <AvatarImage src={item.jogador_imagem_perfil || undefined} />
-                              <AvatarFallback className="bg-primary/10 text-primary">
-                                {item.jogador_nome.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-bold text-foreground group-hover:text-primary transition-colors">
-                                {item.jogador_nome}
-                              </div>
-                              <Badge variant="outline" className="text-[10px] h-5 px-1.5 md:hidden">
-                                {item.pontos} pts
-                              </Badge>
-                            </div>
-                          </div>
-                        </PlayerCardModal>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Badge variant="secondary" className="text-base font-bold px-3 py-1 bg-primary/10 text-primary hover:bg-primary/20">
-                          {item.pontos}
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-4 text-center hidden sm:table-cell font-medium text-muted-foreground">
-                        {item.gols}
-                      </td>
-                      <td className="py-4 px-4 text-center hidden sm:table-cell font-medium text-muted-foreground">
-                        {item.assistencias}
-                      </td>
+      {erro ? (
+        <Card><CardContent className="py-10 text-center font-bold text-destructive">{erro}</CardContent></Card>
+      ) : ranking.length === 0 ? (
+        <Card><CardContent className="py-10 text-center text-muted-foreground">Ainda não há dados suficientes para o ranking.</CardContent></Card>
+      ) : (
+        <>
+          <Card>
+            <CardContent className="pt-6">
+              <Podio
+                unidade="pts"
+                itens={ranking.slice(0, 3).map(r => ({
+                  id: r.jogador_id,
+                  nome: r.jogador_nome,
+                  foto: r.jogador_imagem_perfil,
+                  valor: r.pontos,
+                  detalhe: `${r.gols} G · ${r.assistencias} A`,
+                }))}
+                wrap={(item, node) => {
+                  const r = ranking.find(x => x.jogador_id === item.id)!;
+                  return <PlayerCardModal player={carta(r)}>{node}</PlayerCardModal>;
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Classificação geral</CardTitle>
+              <CardDescription>Pontos = gols + assistências, somando todos os rachas.</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 sm:px-6">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                      <th className="w-12 pb-3 pl-4 sm:pl-2">#</th>
+                      <th className="pb-3">Jogador</th>
+                      <th className="pb-3 text-center">Pts</th>
+                      <th className="hidden pb-3 text-center sm:table-cell">Jogos</th>
+                      <th className="hidden pb-3 text-center sm:table-cell">Gols</th>
+                      <th className="hidden pb-3 pr-2 text-center sm:table-cell">Assist.</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {ranking.map(item => (
+                      <tr key={item.jogador_id} className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40">
+                        <td className="py-3 pl-4 text-sm font-black tabular-nums text-muted-foreground sm:pl-2">{item.posicao}º</td>
+                        <td className="py-3">
+                          <PlayerCardModal player={carta(item)}>
+                            <div className="flex items-center gap-3 pr-2">
+                              <Avatar className="size-10 shrink-0 rounded-full border-2 border-border bg-muted">
+                                <AvatarImage src={item.jogador_imagem_perfil || undefined} className="object-cover" />
+                                <AvatarFallback className="bg-primary/15 text-xs font-black text-primary">{iniciais(item.jogador_nome)}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="truncate font-bold">{item.jogador_nome}</p>
+                                <p className="text-xs font-semibold text-muted-foreground">
+                                  <span className="sm:hidden">{item.gols}G · {item.assistencias}A</span>
+                                  <span className="hidden sm:inline">{posicaoLabel(item.posicao_campo)}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </PlayerCardModal>
+                        </td>
+                        <td className="py-3 text-center text-lg font-black tabular-nums text-primary">{item.pontos}</td>
+                        <td className="hidden py-3 text-center tabular-nums text-muted-foreground sm:table-cell">{item.presencas}</td>
+                        <td className="hidden py-3 text-center tabular-nums text-muted-foreground sm:table-cell">{item.gols}</td>
+                        <td className="hidden py-3 pr-2 text-center tabular-nums text-muted-foreground sm:table-cell">{item.assistencias}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

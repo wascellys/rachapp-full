@@ -99,10 +99,10 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Seleci
                 </div>
             </div>
             <div className="relative mt-2">
-                {open && selectables.length > 0 ? (
-                    <div className="absolute w-full z-10 top-0 rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+                {selectables.length > 0 ? (
+                    <div className="w-full rounded-xl border-2 bg-popover text-popover-foreground shadow-md outline-none animate-in">
                         <CommandList>
-                            <CommandGroup className="h-full overflow-auto max-h-60">
+                            <CommandGroup className="h-full overflow-auto max-h-52">
                                 {selectables.map((option) => (
                                     <CommandItem
                                         key={option.value}

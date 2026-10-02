@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FaCheck, FaTimes, FaUserClock, FaPaperPlane } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { formatarData, iniciais, mensagemErro, nomeCompleto, posicaoLabel } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Solicitacao {
@@ -36,7 +37,8 @@ export default function Solicitacoes() {
     try {
       // Fetch Recebidas (default)
       const resRecebidas = await api.get('/solicitacoes/');
-      const pendentesRecebidas = (resRecebidas.data.results || resRecebidas.data).filter((s: Solicitacao) => s.status === 'PENDENTE');
+      const listaRecebidas = Array.isArray(resRecebidas.data) ? resRecebidas.data : resRecebidas.data.results || [];
+      const pendentesRecebidas = listaRecebidas.filter((s: Solicitacao) => s.status === 'PENDENTE');
       setRecebidas(pendentesRecebidas);
 
       // Fetch Enviadas
@@ -45,8 +47,7 @@ export default function Solicitacoes() {
       setEnviadas(Array.isArray(dataEnviadas) ? dataEnviadas : []);
 
     } catch (error) {
-      console.error('Erro ao buscar solicitações:', error);
-      toast.error('Erro ao carregar solicitações');
+      toast.error(mensagemErro(error, 'Erro ao carregar solicitações.'));
     } finally {
       setLoading(false);
     }
@@ -56,22 +57,26 @@ export default function Solicitacoes() {
     fetchSolicitacoes();
   }, []);
 
+  const [processando, setProcessando] = useState<string | null>(null);
+
   const handleAction = async (id: string, action: 'aprovar' | 'negar') => {
+    setProcessando(id);
     try {
       await api.post(`/solicitacoes/${id}/${action}/`);
       toast.success(`Solicitação ${action === 'aprovar' ? 'aprovada' : 'negada'} com sucesso!`);
       fetchSolicitacoes(); // Recarregar lista
     } catch (error) {
-      console.error(`Erro ao ${action} solicitação:`, error);
-      toast.error(`Erro ao ${action} solicitação`);
+      toast.error(mensagemErro(error, `Erro ao ${action} solicitação.`));
+    } finally {
+      setProcessando(null);
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDENTE': return <span className="text-yellow-600 bg-yellow-100 px-2 py-1 rounded text-xs font-bold">Pendente</span>;
-      case 'ACEITO': return <span className="text-green-600 bg-green-100 px-2 py-1 rounded text-xs font-bold">Aceito</span>;
-      case 'NEGADO': return <span className="text-red-600 bg-red-100 px-2 py-1 rounded text-xs font-bold">Negado</span>;
+      case 'PENDENTE': return <Badge variant="warning">⏳ Pendente</Badge>;
+      case 'ACEITO': return <Badge variant="live">✓ Aceito</Badge>;
+      case 'NEGADO': return <Badge variant="danger">✕ Negado</Badge>;
       default: return status;
     }
   };
@@ -142,7 +147,7 @@ export default function Solicitacoes() {
                         {solicitacao.racha.nome}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(solicitacao.criado_em).toLocaleDateString()}
+                        {formatarData(solicitacao.criado_em)}
                       </span>
                     </div>
                   </CardHeader>
@@ -151,14 +156,14 @@ export default function Solicitacoes() {
                       <Avatar className="h-12 w-12 bg-background rounded-full" >
                         <AvatarImage src={solicitacao.jogador.imagem_perfil || ''} />
                         <AvatarFallback className="bg-primary/20 text-primary">
-                          {solicitacao.jogador.first_name?.charAt(0) || solicitacao.jogador.username.charAt(0)}
+                          {iniciais(nomeCompleto(solicitacao.jogador))}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <h4 className="font-semibold text-lg">
-                          {solicitacao.jogador.first_name} {solicitacao.jogador.last_name}
+                          {nomeCompleto(solicitacao.jogador)}
                         </h4>
-                        <p className="text-sm text-muted-foreground">@{solicitacao.jogador.username} • {solicitacao.jogador.posicao}</p>
+                        <p className="text-sm text-muted-foreground">@{solicitacao.jogador.username} • {posicaoLabel(solicitacao.jogador.posicao)}</p>
                       </div>
                     </div>
 
@@ -167,12 +172,14 @@ export default function Solicitacoes() {
                         variant="outline"
                         className="w-full border-destructive/50 hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleAction(solicitacao.id, 'negar')}
+                        disabled={processando === solicitacao.id}
                       >
                         <FaTimes className="mr-2" /> Negar
                       </Button>
                       <Button
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                         onClick={() => handleAction(solicitacao.id, 'aprovar')}
+                        disabled={processando === solicitacao.id}
                       >
                         <FaCheck className="mr-2" /> Aprovar
                       </Button>
@@ -203,7 +210,7 @@ export default function Solicitacoes() {
                 <div key={s.id} className="flex justify-between items-center p-4 border rounded-lg bg-card shadow-sm">
                   <div>
                     <p className="font-semibold text-lg">{s.racha.nome}</p>
-                    <p className="text-sm text-muted-foreground">Enviado em: {new Date(s.criado_em).toLocaleDateString()}</p>
+                    <p className="text-sm text-muted-foreground">Enviada em {formatarData(s.criado_em)}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     {getStatusBadge(s.status)}

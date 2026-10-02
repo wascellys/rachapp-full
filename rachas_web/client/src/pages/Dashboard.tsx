@@ -1,259 +1,164 @@
-
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Link } from "wouter";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  FaFutbol,
-  FaTrophy,
-  FaHandshake,
-  FaChartLine,
-  FaUserFriends,
-  FaEdit,
-} from "react-icons/fa";
+import { FaFutbol, FaHandshake, FaUserFriends, FaEdit, FaTrophy, FaCalendarCheck } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlayerCard } from "@/components/PlayerCard";
+import { BarChartCard, StatTile } from "@/components/Stats";
+import { formatarData, formatarDataCurta, iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
+import { calcularRating, TIER_THEME } from "@/lib/playerRating";
 
 interface DashboardStats {
   id: string;
   nome: string;
+  username: string;
   posicao: string;
   imagem_perfil: string | null;
+  data_criacao: string;
   rachas_count: number;
   partidas_count: number;
   gols: number;
   assistencias: number;
+  premios: number;
   media_gols: number;
   media_assistencias: number;
-  melhor_garcom: {
-    id: string;
-    nome: string;
-    assistencias: number;
-    imagem_perfil: string | null;
-  } | null;
+  melhor_garcom: { id: string; nome: string; assistencias: number; imagem_perfil: string | null } | null;
+  historico: { partida_id: string; data: string; racha_nome: string; gols: number; assistencias: number }[];
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const response = await api.get("/usuarios/dashboard/");
-        setStats(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
+    api
+      .get("/usuarios/dashboard/")
+      .then(res => setStats(res.data))
+      .catch(error => setErro(mensagemErro(error, "Não foi possível carregar seu desempenho.")))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
-          <Skeleton className="h-32 rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-3xl" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)}
         </div>
       </div>
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return <Card><CardContent className="py-10 text-center font-bold text-destructive">{erro}</CardContent></Card>;
+  }
+
+  const carta = {
+    name: stats.nome,
+    username: stats.username,
+    position: stats.posicao,
+    points: stats.gols + stats.assistencias,
+    stats: { matches: stats.partidas_count, goals: stats.gols, assists: stats.assistencias, awards: stats.premios },
+    photo: stats.imagem_perfil,
+  };
+  const rating = calcularRating(carta);
+  const participacao = stats.partidas_count > 0 ? ((stats.gols + stats.assistencias) / stats.partidas_count).toFixed(2) : "0";
+  const historico = stats.historico.map(h => ({ data: formatarDataCurta(h.data), gols: h.gols, assistencias: h.assistencias }));
 
   return (
     <div className="space-y-6">
-      {/* Profile Header */}
-      <Card className="bg-gradient-to-r from-background to-muted/20 border-primary/20">
-        <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl rounded-full bg-background">
-              <AvatarImage src={stats.imagem_perfil || undefined} className="object-cover" />
-              <AvatarFallback className="text-4xl bg-muted">
-                {stats.nome.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="text-center md:text-left flex-1">
-              <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">{stats.nome}</h1>
-                <Badge variant="secondary" className="text-base px-3 py-1">
-                  {stats.posicao}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Atleta desde {new Date().getFullYear()} • Participando de{" "}
-                {stats.rachas_count} {stats.rachas_count === 1 ? "Racha" : "Rachas"}
-              </p>
-              <Link href="/perfil">
-                <Button size="sm" variant="outline">
-                  <FaEdit className="mr-2" /> Editar Perfil
-                </Button>
-              </Link>
-            </div>
-
-            {/* Quick Stats - Mobile visible, Desktop compact */}
-            <div className="flex gap-4 md:gap-8 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-8 mt-2 md:mt-0">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.partidas_count}</p>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Jogos</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.gols}</p>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Gols</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.assistencias}</p>
-                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Assists</p>
-              </div>
-            </div>
+      {/* Hero com a carta */}
+      <section className="relative overflow-hidden rounded-3xl border-2 border-border bg-card p-6 md:p-8" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="pointer-events-none absolute -left-24 top-0 size-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col items-center gap-8 md:flex-row md:items-center">
+          <div className="rounded-3xl bg-[#07130a] px-6 pb-3 pt-6">
+            <PlayerCard {...carta} />
           </div>
+          <div className="flex-1 space-y-4 text-center md:text-left">
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground">Meu desempenho</p>
+              <h1 className="text-3xl font-black tracking-tight md:text-4xl">{stats.nome}</h1>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                <Badge variant="outline">{posicaoLabel(stats.posicao)}</Badge>
+                <Badge variant="gold">Carta {TIER_THEME[rating.tier].label} · OVR {rating.overall}</Badge>
+              </div>
+            </div>
+            <p className="text-muted-foreground">
+              No RachApp desde {formatarData(stats.data_criacao, { day: undefined, month: "long" })} · participa de{" "}
+              <strong className="text-foreground">{stats.rachas_count}</strong> {stats.rachas_count === 1 ? "racha" : "rachas"}.
+            </p>
+            {rating.proximoTier && (
+              <div className="mx-auto max-w-sm md:mx-0">
+                <div className="mb-1 flex justify-between text-xs font-bold text-muted-foreground">
+                  <span>Progresso para {TIER_THEME[rating.proximoTier].label}</span>
+                  <span className="tabular-nums">{Math.round(rating.progresso * 100)}%</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={Math.round(rating.progresso * 100)} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-primary transition-[width] duration-700" style={{ width: `${rating.progresso * 100}%` }} />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">Jogue mais, marque e dê assistências para evoluir sua carta.</p>
+              </div>
+            )}
+            <Link href="/perfil">
+              <Button variant="outline" size="sm"><FaEdit /> Editar perfil e foto</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="Jogos" value={stats.partidas_count} icon={<FaCalendarCheck />} />
+        <StatTile label="Gols" value={stats.gols} hint={`${stats.media_gols} por jogo`} icon={<FaFutbol />} />
+        <StatTile label="Assistências" value={stats.assistencias} hint={`${stats.media_assistencias} por jogo`} icon={<FaHandshake />} />
+        <StatTile label="Prêmios" value={stats.premios} hint={`${participacao} G+A por jogo`} icon={<FaTrophy />} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Suas últimas partidas</CardTitle>
+          <CardDescription>Gols e assistências em cada jogo em que você esteve presente</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {historico.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">Quando você jogar sua primeira partida, o gráfico aparece aqui.</p>
+          ) : (
+            <BarChartCard
+              ariaLabel="Gráfico com seus gols e assistências por partida"
+              data={historico}
+              xKey="data"
+              series={[
+                { key: "gols", label: "Gols", slot: 1 },
+                { key: "assistencias", label: "Assistências", slot: 2 },
+              ]}
+            />
+          )}
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        <FaChartLine className="text-primary" /> Estatísticas Gerais
-      </h2>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total de Gols */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Total de Gols</CardTitle>
-            <FaFutbol className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.gols}</div>
-            <p className="text-xs text-muted-foreground">
-              Gols marcados
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Total de Assistências */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Assists</CardTitle>
-            <FaHandshake className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.assistencias}</div>
-            <p className="text-xs text-muted-foreground">
-              Assistências realizadas
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Média de Gols */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média de Gols</CardTitle>
-            <FaFutbol className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.media_gols}</div>
-            <p className="text-xs text-muted-foreground">
-              Gols por partida
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Média de Assistências */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Média de Assists
-            </CardTitle>
-            <FaHandshake className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.media_assistencias}</div>
-            <p className="text-xs text-muted-foreground">
-              Assistências por partida
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Participação em Gols */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Participação em Gols
-            </CardTitle>
-            <FaTrophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.partidas_count > 0
-                ? Math.round(((stats.gols + stats.assistencias) / stats.partidas_count) * 100) / 100
-                : 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Gols + Assists por jogo
-            </p>
-          </CardContent>
-        </Card>
-
-      </div>
-
-      {/* Melhor Companheiro - Featured Card */}
       {stats.melhor_garcom && (
-        <Card className="bg-gradient-to-r from-background to-muted/20 border-primary/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <FaUserFriends className="text-primary" /> Sua Melhor Dupla
-            </CardTitle>
-            <CardDescription>
-              O jogador que mais contribuiu para seus gols
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><FaUserFriends className="text-primary" aria-hidden /> Sua melhor dupla</CardTitle>
+            <CardDescription>Quem mais te deixou na cara do gol</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 md:p-8">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <Avatar className="h-24 w-24 md:h-40 md:w-40 border-4 border-background shadow-xl rounded-full bg-background">
-                <AvatarImage
-                  src={stats.melhor_garcom.imagem_perfil || undefined}
-                  className="object-cover"
-                />
-                <AvatarFallback className="text-4xl bg-muted">
-                  {stats.melhor_garcom.nome[0]}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="text-center md:text-left flex-1">
-                <div className="flex flex-col md:flex-row items-center justify-center md:justify-start gap-3 mb-2">
-                  <h3 className="text-3xl font-bold">{stats.melhor_garcom.nome}</h3>
-                  <Badge className="text-base px-3 py-1 bg-primary/20 text-primary hover:bg-primary/30 border-primary/20">
-                    Garçom de Elite
-                  </Badge>
-                </div>
-
-                <p className="text-muted-foreground mb-6 max-w-lg">
-                  Essa é a parceria que dá certo! {stats.melhor_garcom.nome} já te deixou na cara do gol {stats.melhor_garcom.assistencias} vezes.
-                </p>
-
-                <div className="flex justify-center md:justify-start gap-8">
-                  <div className="text-center">
-                    <p className="text-4xl font-bold text-primary">{stats.melhor_garcom.assistencias}</p>
-                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-1">Assistências para você</p>
-                  </div>
-                </div>
-              </div>
+          <CardContent className="flex flex-col items-center gap-5 sm:flex-row">
+            <Avatar className="size-20 rounded-full border-4 border-primary/40 bg-muted">
+              <AvatarImage src={stats.melhor_garcom.imagem_perfil || undefined} className="object-cover" />
+              <AvatarFallback className="text-2xl font-black">{iniciais(stats.melhor_garcom.nome)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="text-2xl font-black">{stats.melhor_garcom.nome}</p>
+              <p className="text-muted-foreground">
+                Te deu <strong className="text-foreground">{stats.melhor_garcom.assistencias}</strong>{" "}
+                {stats.melhor_garcom.assistencias === 1 ? "assistência" : "assistências"} para gol.
+              </p>
             </div>
+            <Badge variant="success" className="text-sm">Garçom de elite</Badge>
           </CardContent>
         </Card>
       )}
