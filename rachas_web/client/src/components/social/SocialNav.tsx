@@ -17,29 +17,36 @@ export function SocialNav() {
 
   const meuPerfil = `/social/perfil/${user?.username ?? ""}`;
   const itens = [
-    { href: "/social", label: "Feed", icon: FaHome, ativo: location === "/social" || location.startsWith("/social/post") },
-    { href: "/social/reels", label: "Reels", icon: FaFilm, ativo: location.startsWith("/social/reels") },
-    { href: "/social/amigos", label: "Amigos", icon: FaUserFriends, ativo: location.startsWith("/social/amigos"), badge: resumo.pedidos_amizade },
-    { href: "/social/notificacoes", label: "Notificações", icon: FaBell, ativo: location.startsWith("/social/notificacoes"), badge: resumo.notificacoes_nao_lidas },
-    { href: meuPerfil, label: "Perfil", icon: FaUserCircle, ativo: location === meuPerfil },
+    { href: "/social", label: "Feed", curto: "Feed", icon: FaHome, ativo: location === "/social" || location.startsWith("/social/post") },
+    { href: "/social/reels", label: "Reels", curto: "Reels", icon: FaFilm, ativo: location.startsWith("/social/reels") },
+    { href: "/social/amigos", label: "Amigos", curto: "Amigos", icon: FaUserFriends, ativo: location.startsWith("/social/amigos"), badge: resumo.pedidos_amizade },
+    { href: "/social/notificacoes", label: "Notificações", curto: "Avisos", icon: FaBell, ativo: location.startsWith("/social/notificacoes"), badge: resumo.notificacoes_nao_lidas },
+    { href: meuPerfil, label: "Perfil", curto: "Perfil", icon: FaUserCircle, ativo: location === meuPerfil },
   ];
 
   return (
-    <nav aria-label="Rede social" className="-mx-4 mb-5 overflow-x-auto px-4 md:mx-0 md:px-0">
-      <ul className="flex w-max min-w-full gap-1 rounded-full border-2 border-border bg-card p-1 md:min-w-0">
+    <nav aria-label="Rede social" className="mb-5">
+      {/* Celular: 5 colunas que cabem na tela (ícone + nome curto); a partir de sm: pílulas em linha */}
+      <ul className="grid grid-cols-5 gap-1 rounded-3xl border-2 border-border bg-card p-1 sm:flex sm:rounded-full">
         {itens.map(i => (
-          <li key={i.href} className="flex-1">
+          <li key={i.href} className="min-w-0 sm:flex-1">
             <Link
               href={i.href}
               aria-current={i.ativo ? "page" : undefined}
+              aria-label={i.badge ? `${i.label} (${i.badge} novos)` : i.label}
               className={cn(
-                "relative flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-extrabold transition-colors",
+                "relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-[11px] font-extrabold transition-colors sm:flex-row sm:gap-2 sm:rounded-full sm:px-3 sm:py-2 sm:text-sm",
                 i.ativo ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <i.icon aria-hidden /> <span>{i.label}</span>
+              <i.icon aria-hidden className="text-base sm:text-sm" />
+              <span className="max-w-full truncate sm:hidden">{i.curto}</span>
+              <span className="hidden sm:inline">{i.label}</span>
               {!!i.badge && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-black text-white" aria-label={`${i.badge} novos`}>
+                <span
+                  className="absolute right-1 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-black text-white sm:static sm:h-5 sm:min-w-5 sm:text-[10px]"
+                  aria-label={`${i.badge} novos`}
+                >
                   {i.badge}
                 </span>
               )}

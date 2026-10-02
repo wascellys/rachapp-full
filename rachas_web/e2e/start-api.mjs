@@ -17,7 +17,8 @@ const candidatos = [
 ].filter(Boolean);
 const python = candidatos.find(p => fs.existsSync(p)) || "python";
 
-const banco = path.join(os.tmpdir(), "rachapp-e2e.sqlite3").replace(/\\/g, "/");
+// Um banco por porta: rodar os testes não apaga uma instância de demonstração em outra porta
+const banco = path.join(os.tmpdir(), `rachapp-e2e-${porta}.sqlite3`).replace(/\\/g, "/");
 const env = {
   ...process.env,
   DATABASE_URL: `sqlite:///${banco}`,
