@@ -121,11 +121,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://rachapp-full-production.up.railway.app",
     "https://racha-front-production.up.railway.app",
     "https://rachapp.com.br",
-    "https://www.rachapp.com.br"
-
-    # Adicione seu dominio em producao:
-    # "https://seu_dominio.com",
+    "https://www.rachapp.com.br",
+    "https://api.rachapp.com.br",
 ]
+
+# O Railway termina o HTTPS no proxy e repassa a requisição em HTTP; este cabeçalho
+# faz o Django reconhecer a conexão como segura (links absolutos com https://).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # DATABASES = {
 #     'default': {

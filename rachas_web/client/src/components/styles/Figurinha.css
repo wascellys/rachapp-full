@@ -1,11 +1,10 @@
-/* Figurinha do álbum. A largura vem de --fig-w (padrão 120px); a altura segue a proporção 3:4. */
+/* Figurinha do álbum. A largura vem de --fig-w (padrão 120px, herdável do elemento pai); a altura segue a proporção 3:4. */
 .fig {
-  --fig-w: 120px;
   position: relative;
-  width: var(--fig-w);
+  width: var(--fig-w, 120px);
   aspect-ratio: 3 / 4;
-  border-radius: calc(var(--fig-w) * 0.09);
-  padding: calc(var(--fig-w) * 0.035);
+  border-radius: calc(var(--fig-w, 120px) * 0.09);
+  padding: calc(var(--fig-w, 120px) * 0.035);
   font-family: "Barlow Condensed", "Nunito", "Arial Narrow", sans-serif;
   user-select: none;
   flex-shrink: 0;
@@ -17,7 +16,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  border-radius: calc(var(--fig-w) * 0.065);
+  border-radius: calc(var(--fig-w, 120px) * 0.065);
 }
 
 .fig-top {
@@ -26,9 +25,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(var(--fig-w) * 0.05) calc(var(--fig-w) * 0.06) 0;
+  padding: calc(var(--fig-w, 120px) * 0.05) calc(var(--fig-w, 120px) * 0.06) 0;
   font-weight: 800;
-  font-size: calc(var(--fig-w) * 0.1);
+  font-size: calc(var(--fig-w, 120px) * 0.1);
   line-height: 1;
 }
 
@@ -58,14 +57,14 @@
   height: 96%;
   object-fit: cover;
   object-position: center top;
-  border-radius: calc(var(--fig-w) * 0.05) calc(var(--fig-w) * 0.05) 0 0;
+  border-radius: calc(var(--fig-w, 120px) * 0.05) calc(var(--fig-w, 120px) * 0.05) 0 0;
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
 }
 
 .fig-initials {
   align-self: center;
-  font-size: calc(var(--fig-w) * 0.32);
+  font-size: calc(var(--fig-w, 120px) * 0.32);
   font-weight: 900;
   opacity: 0.9;
 }
@@ -77,7 +76,7 @@
   flex-direction: column;
   align-items: center;
   min-width: 0;
-  padding: 0 calc(var(--fig-w) * 0.06) calc(var(--fig-w) * 0.05);
+  padding: 0 calc(var(--fig-w, 120px) * 0.06) calc(var(--fig-w, 120px) * 0.05);
   text-align: center;
   line-height: 1.05;
 }
@@ -89,14 +88,14 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   font-weight: 800;
-  font-size: calc(var(--fig-w) * 0.125);
+  font-size: calc(var(--fig-w, 120px) * 0.125);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .fig-tier {
   font-weight: 800;
-  font-size: calc(var(--fig-w) * 0.085);
+  font-size: calc(var(--fig-w, 120px) * 0.085);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
@@ -123,8 +122,8 @@
 
 .fig-badge {
   position: absolute;
-  top: calc(var(--fig-w) * -0.06);
-  right: calc(var(--fig-w) * -0.06);
+  top: calc(var(--fig-w, 120px) * -0.06);
+  right: calc(var(--fig-w, 120px) * -0.06);
   z-index: 5;
   min-width: 1.6rem;
   padding: 0.1rem 0.4rem;
@@ -153,7 +152,7 @@
 .fig-colar {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--fig-w) * -0.07);
+  bottom: calc(var(--fig-w, 120px) * -0.07);
   z-index: 5;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -191,7 +190,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: calc(var(--fig-w) * 0.07);
+  padding: calc(var(--fig-w, 120px) * 0.07);
   border: 2px dashed var(--border);
   background: color-mix(in oklch, var(--muted) 55%, transparent);
   color: var(--muted-foreground);
@@ -199,7 +198,7 @@
 
 .fig-vazia-num {
   font-weight: 900;
-  font-size: calc(var(--fig-w) * 0.16);
+  font-size: calc(var(--fig-w, 120px) * 0.16);
   font-variant-numeric: tabular-nums;
 }
 
@@ -211,7 +210,7 @@
 
 .fig-vazia-raridade {
   font-weight: 800;
-  font-size: calc(var(--fig-w) * 0.09);
+  font-size: calc(var(--fig-w, 120px) * 0.09);
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
@@ -310,5 +309,21 @@
   }
   .fig-reveal-inner {
     transition: none;
+  }
+}
+
+/* Figurinha ampliada */
+.fig-ampliada {
+  animation: fig-ampliar 0.35s cubic-bezier(.2, 1.2, .4, 1) both;
+}
+
+@keyframes fig-ampliar {
+  from { transform: scale(0.6) rotate(-4deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fig-ampliada {
+    animation: none;
   }
 }

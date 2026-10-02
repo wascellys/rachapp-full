@@ -14,11 +14,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatTile } from "@/components/Stats";
 import { Figurinha } from "@/components/Figurinha";
 import { TIER_THEME } from "@/lib/playerRating";
-import { RARIDADES, RARIDADE_TIER, type AlbumResponse, type FigurinhaSorteada, type PaginaAlbum } from "@/lib/album";
+import {
+  RARIDADES,
+  RARIDADE_TIER,
+  numeroFigurinha,
+  type AlbumResponse,
+  type FigurinhaSlot,
+  type FigurinhaSorteada,
+  type JogadorAlbum,
+  type PaginaAlbum,
+} from "@/lib/album";
 import { iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
 import { invalidateRachaCache } from "@/lib/useRachaCache";
 
 type Filtro = "todas" | "faltando" | "completas" | "colar";
+
+interface FigurinhaEmFoco {
+  figurinha: FigurinhaSlot;
+  jogador: JogadorAlbum;
+  pagina: number;
+}
 
 export default function Album() {
   const [, params] = useRoute("/racha/:id/album");
@@ -28,6 +43,7 @@ export default function Album() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [abrindo, setAbrindo] = useState(false);
+  const [emFoco, setEmFoco] = useState<FigurinhaEmFoco | null>(null);
 
   const carregar = async () => {
     try {
@@ -73,7 +89,7 @@ export default function Album() {
   const repetidas = useMemo(
     () =>
       paginas.flatMap(p =>
-        p.figurinhas.filter(f => f.quantidade > 1).map(f => ({ ...f, jogador: p.jogador, extras: f.quantidade - 1 })),
+        p.figurinhas.filter(f => f.quantidade > 1).map(f => ({ ...f, jogador: p.jogador, pagina: p.numero, extras: f.quantidade - 1 })),
       ),
     [paginas],
   );
@@ -241,7 +257,12 @@ export default function Album() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {paginasFiltradas.map(p => (
-                <PaginaCard key={p.id} pagina={p} onColar={ids => colar(ids)} />
+                <PaginaCard
+                  key={p.id}
+                  pagina={p}
+                  onColar={ids => colar(ids)}
+                  onAmpliar={f => setEmFoco({ figurinha: f, jogador: p.jogador, pagina: p.numero })}
+                />
               ))}
             </div>
           )}
@@ -255,16 +276,22 @@ export default function Album() {
               <p className="mb-4 text-sm text-muted-foreground">Guarde suas repetidas: elas vão valer nas trocas entre jogadores.</p>
               <div className="flex flex-wrap gap-4">
                 {repetidas.map(f => (
-                  <Figurinha
+                  <button
                     key={f.id}
-                    raridade={f.raridade}
-                    numero={f.numero}
-                    nome={f.jogador.nome}
-                    posicao={f.jogador.posicao}
-                    foto={f.jogador.imagem_perfil}
-                    repetidas={f.extras}
-                    className="[--fig-w:104px]"
-                  />
+                    type="button"
+                    onClick={() => setEmFoco({ figurinha: f, jogador: f.jogador, pagina: f.pagina })}
+                    className="rounded-xl [--fig-w:104px]"
+                    aria-label={`Ampliar figurinha de ${f.jogador.nome}`}
+                  >
+                    <Figurinha
+                      raridade={f.raridade}
+                      numero={f.numero}
+                      nome={f.jogador.nome}
+                      posicao={f.jogador.posicao}
+                      foto={f.jogador.imagem_perfil}
+                      repetidas={f.extras}
+                    />
+                  </button>
                 ))}
               </div>
             </>
@@ -317,11 +344,69 @@ export default function Album() {
         }}
         onColar={ids => colar(ids)}
       />
+
+      <FigurinhaAmpliada emFoco={emFoco} onClose={() => setEmFoco(null)} />
     </div>
   );
 }
 
-function PaginaCard({ pagina, onColar }: { pagina: PaginaAlbum; onColar: (ids: string[]) => void }) {
+/** Mostra uma figurinha colada em tamanho grande, no centro da tela. */
+function FigurinhaAmpliada({ emFoco, onClose }: { emFoco: FigurinhaEmFoco | null; onClose: () => void }) {
+  const f = emFoco?.figurinha;
+  const theme = f ? TIER_THEME[RARIDADE_TIER[f.raridade]] : null;
+  const extras = f ? Math.max(0, f.quantidade - 1) : 0;
+  return (
+    <Dialog open={!!emFoco} onOpenChange={aberto => !aberto && onClose()}>
+      <DialogContent showCloseButton={false} className="flex max-w-[360px] flex-col items-center gap-4 border-none bg-transparent p-0 shadow-none">
+        {emFoco && f && theme && (
+          <>
+            <DialogTitle className="sr-only">Figurinha {numeroFigurinha(f.numero)} de {emFoco.jogador.nome}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Raridade {theme.label}, página {emFoco.pagina} do álbum.
+            </DialogDescription>
+            <div className="fig-ampliada [--fig-w:min(78vw,300px)]">
+              <Figurinha
+                raridade={f.raridade}
+                numero={f.numero}
+                nome={emFoco.jogador.nome}
+                posicao={emFoco.jogador.posicao}
+                foto={emFoco.jogador.imagem_perfil}
+              />
+            </div>
+            <div className="w-full rounded-2xl border border-white/15 bg-black/60 px-4 py-3 text-center text-white backdrop-blur">
+              <p className="truncate text-lg font-black" title={emFoco.jogador.nome}>{emFoco.jogador.nome}</p>
+              <p className="text-sm font-semibold text-white/75">
+                {theme.label} · {numeroFigurinha(f.numero)} · Página {emFoco.pagina}
+              </p>
+              {extras > 0 && (
+                <p className="mt-1 text-sm font-bold text-white">
+                  Você tem {extras} {extras === 1 ? "repetida" : "repetidas"} desta figurinha
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-white/25 bg-white/10 px-6 py-2.5 text-sm font-extrabold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              Fechar
+            </button>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PaginaCard({
+  pagina,
+  onColar,
+  onAmpliar,
+}: {
+  pagina: PaginaAlbum;
+  onColar: (ids: string[]) => void;
+  onAmpliar: (figurinha: FigurinhaSlot) => void;
+}) {
   const coladas = pagina.figurinhas.filter(f => f.colada).length;
   const completa = coladas === pagina.figurinhas.length;
   return (
@@ -360,6 +445,16 @@ function PaginaCard({ pagina, onColar }: { pagina: PaginaAlbum; onColar: (ids: s
             );
             return estado === "pendente" ? (
               <button key={f.id} type="button" onClick={() => onColar([f.id])} className="rounded-xl" aria-label={`Colar figurinha de ${pagina.jogador.nome}`}>
+                {fig}
+              </button>
+            ) : estado === "colada" ? (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => onAmpliar(f)}
+                className="rounded-xl transition-transform hover:-translate-y-0.5"
+                aria-label={`Ampliar figurinha de ${pagina.jogador.nome}`}
+              >
                 {fig}
               </button>
             ) : (
