@@ -125,6 +125,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.rachapp.com.br",
     "https://api.rachapp.com.br",
 ]
+# Origens extras por ambiente (ex.: versão de teste): CSRF_TRUSTED_ORIGINS_EXTRA=https://a,https://b
+CSRF_TRUSTED_ORIGINS += [o for o in config('CSRF_TRUSTED_ORIGINS_EXTRA', default='').split(',') if o]
 
 # O Railway termina o HTTPS no proxy e repassa a requisição em HTTP; este cabeçalho
 # faz o Django reconhecer a conexão como segura (links absolutos com https://).
@@ -297,6 +299,8 @@ if USE_R2_STORAGE:
         'endpoint_url': R2_ENDPOINT,
         'access_key': R2_ACCESS_KEY,
         'secret_key': R2_SECRET_KEY,
+        # Subpasta no bucket: a versão de teste usa R2_LOCATION=dev e nunca toca nos arquivos da produção
+        'location': config('R2_LOCATION', default=''),
     }
 
     STORAGES = {
