@@ -24,6 +24,12 @@ import EsqueciSenha from "./pages/EsqueciSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import Album from "./pages/Album";
 import AlbumAdmin from "./pages/AlbumAdmin";
+import SocialFeed from "./pages/social/Feed";
+import SocialReels from "./pages/social/Reels";
+import SocialPerfil from "./pages/social/Perfil";
+import SocialAmigos from "./pages/social/Amigos";
+import SocialNotificacoes from "./pages/social/Notificacoes";
+import SocialPostDetalhe from "./pages/social/PostDetalhe";
 
 function Router() {
   return (
@@ -115,6 +121,43 @@ function Router() {
       <Route path="/solicitacoes">
         <Layout>
           <Solicitacoes />
+        </Layout>
+      </Route>
+
+      {/* Rede social */}
+      <Route path="/social">
+        <Layout>
+          <SocialFeed />
+        </Layout>
+      </Route>
+
+      <Route path="/social/reels">
+        <Layout>
+          <SocialReels />
+        </Layout>
+      </Route>
+
+      <Route path="/social/amigos">
+        <Layout>
+          <SocialAmigos />
+        </Layout>
+      </Route>
+
+      <Route path="/social/notificacoes">
+        <Layout>
+          <SocialNotificacoes />
+        </Layout>
+      </Route>
+
+      <Route path="/social/perfil/:username">
+        <Layout>
+          <SocialPerfil />
+        </Layout>
+      </Route>
+
+      <Route path="/social/post/:id">
+        <Layout>
+          <SocialPostDetalhe />
         </Layout>
       </Route>
 

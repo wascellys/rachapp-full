@@ -14,6 +14,7 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaBars,
+  FaGlobeAmericas,
 } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   /* New logic for badge */
   const [pendingCount, setPendingCount] = useState(0);
+  const [socialCount, setSocialCount] = useState(0);
 
   useEffect(() => {
     const fetchCount = async () => {
@@ -44,6 +46,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           setPendingCount(lista.filter((s: any) => s.status === 'PENDENTE').length);
         } catch (e) {
           console.error("Failed to fetch pending requests count", e);
+        }
+        try {
+          // Selo da rede social: notificações não lidas (pedidos de amizade também geram uma)
+          const res = await api.get('/social/resumo/');
+          setSocialCount(res.data.notificacoes_nao_lidas || 0);
+        } catch {
+          setSocialCount(0);
         }
       }
     };
@@ -80,6 +89,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { path: "/", label: "Meus Rachas", short: "Rachas", icon: FaFutbol },
     { path: "/dashboard", label: "Meu Desempenho", short: "Desempenho", icon: FaChartBar },
+    { path: "/social", label: "Social", short: "Social", icon: FaGlobeAmericas, badge: socialCount },
     { path: "/solicitacoes", label: "Solicitações", short: "Pedidos", icon: FaUsers, badge: pendingCount },
     { path: "/ranking", label: "Ranking Global", short: "Ranking", icon: FaTrophy },
   ];
@@ -284,7 +294,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             return (
               <Link key={item.path} href={item.path}>
                 <div
-                  className={`relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl transition-all ${
+                  className={`relative flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-2xl transition-all sm:px-3 ${
                     active
                       ? "text-primary"
                       : "text-muted-foreground"

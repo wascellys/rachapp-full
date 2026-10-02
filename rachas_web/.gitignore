@@ -130,3 +130,7 @@ android/**/*.iml
 
 # Builds gerados pelo Capacitor
 dist/public/
+
+# Testes E2E (Playwright): vídeos, traces e relatório gerados
+e2e/resultados/
+e2e/relatorio/
