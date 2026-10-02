@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { iniciais, posicaoLabel } from "@/lib/format";
 import {
@@ -51,13 +51,18 @@ function Estrelas({ tier, cor }: { tier: CardRating["tier"]; cor: string }) {
 export function PlayerCardFront({ player, rating, theme }: FaceProps) {
   const nomeExibido = (player.name.length > 14 && player.username ? player.username : player.name) || "Jogador";
   const atributos = [...rating.atributos.slice(0, 5), { sigla: "PTS", nome: "Pontos", valor: player.points }];
+  const [fotoFalhou, setFotoFalhou] = useState(false);
+
+  useEffect(() => setFotoFalhou(false), [player.photo]);
 
   return (
     <Shell theme={theme} foil={theme.foil}>
       {/* Foto / silhueta */}
       <div className="rc-photo">
-        {player.photo ? (
-          <img src={player.photo} alt="" crossOrigin="anonymous" draggable={false} />
+        {player.photo && !fotoFalhou ? (
+          // Sem crossOrigin: o bucket R2 não envia cabeçalhos CORS e a imagem seria bloqueada.
+          // O compartilhamento usa uma URL blob: obtida pelo proxy da API.
+          <img src={player.photo} alt="" draggable={false} onError={() => setFotoFalhou(true)} />
         ) : (
           <div className="rc-photo-fallback" style={{ color: theme.ink }}>
             <svg viewBox="0 0 100 100" aria-hidden className="rc-silhouette" fill="currentColor">
