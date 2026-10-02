@@ -14,7 +14,7 @@ import {
   type TooltipProps,
 } from "recharts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { iniciais } from "@/lib/format";
+import { formatarNome, iniciais, nomeCurto } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /* ─── KPI ─── */
@@ -153,7 +153,10 @@ export function LeaderBars({
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="truncate text-sm font-bold">{item.nome}</span>
+              <span className="truncate text-sm font-bold">
+                <span className="sm:hidden">{nomeCurto(item.nome)}</span>
+                <span className="hidden sm:inline">{formatarNome(item.nome)}</span>
+              </span>
               <span className="shrink-0 text-sm font-black tabular-nums">{item.valor}</span>
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
@@ -216,7 +219,11 @@ export function Podio({
                 {e.label}
               </span>
             </div>
-            <span className="mt-1 block w-full truncate text-sm font-extrabold" title={item.nome}>{item.nome}</span>
+            <span className="mt-1 block w-full truncate text-sm font-extrabold" title={formatarNome(item.nome)}>
+              {/* Colunas do pódio são estreitas: só o primeiro nome no celular */}
+              <span className="sm:hidden">{formatarNome(item.nome).split(" ")[0]}</span>
+              <span className="hidden sm:inline">{nomeCurto(item.nome)}</span>
+            </span>
             <span className="text-xs font-bold text-muted-foreground">
               <span className="text-base font-black tabular-nums text-foreground">{item.valor}</span> {unidade}
             </span>

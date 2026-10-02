@@ -6,7 +6,7 @@ import { FaTrophy } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerCardModal } from "@/components/PlayerCardModal";
 import { Podio } from "@/components/Stats";
-import { iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
+import { iniciais, mensagemErro, nomeCurto, posicaoLabel } from "@/lib/format";
 import type { PlayerCardData } from "@/lib/playerRating";
 
 interface RankingGlobalItem {
@@ -121,7 +121,10 @@ export default function RankingGlobal() {
                                 <AvatarFallback className="bg-primary/15 text-xs font-black text-primary">{iniciais(item.jogador_nome)}</AvatarFallback>
                               </Avatar>
                               <div className="min-w-0">
-                                <p className="truncate font-bold" title={item.jogador_nome}>{item.jogador_nome}</p>
+                                <p className="truncate font-bold" title={item.jogador_nome}>
+                                  <span className="sm:hidden">{nomeCurto(item.jogador_nome)}</span>
+                                  <span className="hidden sm:inline">{item.jogador_nome}</span>
+                                </p>
                                 <p className="truncate text-xs font-semibold text-muted-foreground">
                                   <span className="sm:hidden">{item.gols}G · {item.assistencias}A</span>
                                   <span className="hidden sm:inline">{posicaoLabel(item.posicao_campo)}</span>

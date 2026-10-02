@@ -9,7 +9,7 @@ import { FaFutbol, FaHandshake, FaUserFriends, FaEdit, FaTrophy, FaCalendarCheck
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerCard } from "@/components/PlayerCard";
 import { BarChartCard, StatTile } from "@/components/Stats";
-import { formatarData, formatarDataCurta, iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
+import { formatarData, formatarDataCurta, formatarNome, iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
 import { calcularRating, TIER_THEME } from "@/lib/playerRating";
 
 interface DashboardStats {
@@ -149,10 +149,10 @@ export default function Dashboard() {
           <CardContent className="flex flex-col items-center gap-5 sm:flex-row">
             <Avatar className="size-20 rounded-full border-4 border-primary/40 bg-muted">
               <AvatarImage src={stats.melhor_garcom.imagem_perfil || undefined} className="object-cover" />
-              <AvatarFallback className="text-2xl font-black">{iniciais(stats.melhor_garcom.nome)}</AvatarFallback>
+              <AvatarFallback className="text-2xl font-black">{iniciais(formatarNome(stats.melhor_garcom.nome))}</AvatarFallback>
             </Avatar>
             <div className="w-full min-w-0 flex-1 text-center sm:text-left">
-              <p className="truncate text-2xl font-black" title={stats.melhor_garcom.nome}>{stats.melhor_garcom.nome}</p>
+              <p className="truncate text-2xl font-black" title={formatarNome(stats.melhor_garcom.nome)}>{formatarNome(stats.melhor_garcom.nome)}</p>
               <p className="text-muted-foreground">
                 Te deu <strong className="text-foreground">{stats.melhor_garcom.assistencias}</strong>{" "}
                 {stats.melhor_garcom.assistencias === 1 ? "assistência" : "assistências"} para gol.

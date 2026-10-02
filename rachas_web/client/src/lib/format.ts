@@ -29,15 +29,39 @@ interface PessoaLike {
   username?: string | null;
 }
 
+// Partículas que ficam em minúsculo no meio do nome (mesma regra do backend, rachas/nomes.py)
+const PARTICULAS = new Set(["da", "das", "de", "do", "dos", "e", "di", "du", "del", "della", "van", "von"]);
+
+/** "JOÃO DA SILVA" / "joão da silva" -> "João da Silva". */
+export function formatarNome(nome?: string | null): string {
+  const palavras = (nome ?? "").trim().split(/\s+/).filter(Boolean);
+  return palavras
+    .map((palavra, i) => {
+      const minuscula = palavra.toLocaleLowerCase("pt-BR");
+      if (i > 0 && PARTICULAS.has(minuscula)) return minuscula;
+      // Maiúscula também após hífen e apóstrofo: "ana-maria" -> "Ana-Maria"
+      return minuscula.replace(/(^|[-'’])([^-'’])/g, (_, sep: string, letra: string) => sep + letra.toLocaleUpperCase("pt-BR"));
+    })
+    .join(" ");
+}
+
+/** Nome curto para telas pequenas: primeiro e último nome ("Leonardo do Nascimento Silva" -> "Leonardo Silva"). */
+export function nomeCurto(nome?: string | null): string {
+  const palavras = formatarNome(nome).split(" ").filter(Boolean);
+  if (palavras.length <= 2) return palavras.join(" ");
+  const ultimo = [...palavras].reverse().find(p => !PARTICULAS.has(p)) ?? palavras[palavras.length - 1];
+  return `${palavras[0]} ${ultimo}`;
+}
+
 export function nomeCompleto(p?: PessoaLike | null): string {
   if (!p) return "Anônimo";
-  const nome = `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
+  const nome = formatarNome(`${p.first_name ?? ""} ${p.last_name ?? ""}`);
   return nome || p.username || "Jogador";
 }
 
 export function primeiroNome(p?: PessoaLike | null): string {
   if (!p) return "Anônimo";
-  return p.first_name?.trim() || p.username || "Jogador";
+  return formatarNome(p.first_name).split(" ")[0] || p.username || "Jogador";
 }
 
 export function iniciais(nome?: string | null): string {

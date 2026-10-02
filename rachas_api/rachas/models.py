@@ -6,6 +6,8 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
 from django.conf import settings
 
+from .nomes import formatar_nome
+
 
 class User(AbstractUser):
     """Modelo de usuário estendido com campos específicos para jogadores"""
@@ -28,6 +30,12 @@ class User(AbstractUser):
     auth_uid = models.CharField(max_length=255)
     data_criacao = models.DateTimeField(auto_now_add=True)
     
+    def save(self, *args, **kwargs):
+        # Nomes sempre em "Title Case" (ex.: "JOÃO DA SILVA" -> "João da Silva")
+        self.first_name = formatar_nome(self.first_name or '')
+        self.last_name = formatar_nome(self.last_name or '', inicio=False)
+        super().save(*args, **kwargs)
+
     def get_imagem_perfil_url(self):
         """Retorna a URL absoluta da imagem de perfil"""
         if not self.imagem_perfil:

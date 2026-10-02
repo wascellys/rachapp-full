@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getImageUrl } from "./image-utils";
+import { formatarNome } from "./format";
 
 // URL base da API
 // Usando proxy do Vite para evitar problemas de CORS e mixed content
@@ -32,6 +33,7 @@ api.interceptors.response.use(
     // Se a resposta contém dados, processar campos de imagem
     if (response.data) {
       processImageUrls(response.data);
+      processNomes(response.data);
     }
     return response;
   },
@@ -113,6 +115,32 @@ function processImageUrls(data: any): void {
       if (typeof value === "object" && value !== null) {
         processImageUrls(value);
       }
+    });
+  }
+}
+
+/**
+ * Padroniza nomes de pessoas vindos da API ("JOÃO DA SILVA" -> "João da Silva").
+ * Só toca em campos de pessoa; o "nome" de racha e prêmio fica como está.
+ */
+const CAMPOS_NOME_PESSOA = ["jogador_nome", "first_name", "last_name"];
+
+function processNomes(data: any): void {
+  if (Array.isArray(data)) {
+    data.forEach(item => processNomes(item));
+  } else if (typeof data === "object" && data !== null) {
+    for (const campo of CAMPOS_NOME_PESSOA) {
+      if (typeof data[campo] === "string") {
+        // Sobrenome pode começar com partícula ("da Silva"), então formata como continuação do nome
+        data[campo] = campo === "last_name" ? formatarNome(`x ${data[campo]}`).slice(2) : formatarNome(data[campo]);
+      }
+    }
+    // "nome" só é de pessoa quando vem junto com "username" (jogadores do álbum, dashboard)
+    if (typeof data.nome === "string" && typeof data.username === "string") {
+      data.nome = formatarNome(data.nome);
+    }
+    Object.values(data).forEach(valor => {
+      if (typeof valor === "object" && valor !== null) processNomes(valor);
     });
   }
 }

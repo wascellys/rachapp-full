@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Form,
   FormControl,
@@ -102,11 +103,14 @@ export function PremioModal({
                 <FormItem>
                   <FormLabel>Valor (Pontos)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
+                    <NumberInput
                       placeholder="Ex: 50"
-                      {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
+                      name={field.name}
+                      ref={field.ref}
+                      min={0}
+                      value={Number(field.value) || 0}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
                     />
                   </FormControl>
                   <FormMessage />

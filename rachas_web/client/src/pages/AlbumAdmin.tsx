@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -301,14 +302,12 @@ function EditorPesos({ pesos, onChange }: { pesos: Pesos; onChange: (p: Pesos) =
                 <span className="size-3 shrink-0 rounded-full" style={{ background: t.frame }} aria-hidden />
                 <span className="truncate text-sm font-extrabold">{t.label}</span>
               </div>
-              <Input
-                type="number"
+              <NumberInput
                 min={0}
                 max={1000}
-                inputMode="numeric"
                 value={pesos[r]}
                 aria-label={`Peso da raridade ${t.label}`}
-                onChange={e => onChange({ ...pesos, [r]: Math.max(0, Math.min(1000, Number(e.target.value) || 0)) })}
+                onChange={valor => onChange({ ...pesos, [r]: valor })}
               />
               <p className="mt-1 text-xs font-bold tabular-nums text-muted-foreground">{pct[r].toFixed(1)}% por figurinha</p>
             </div>
@@ -566,13 +565,13 @@ function DistribuirPacotes({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="pacotes-por-jogador">Pacotes por jogador</Label>
-            <Input id="pacotes-por-jogador" type="number" min={1} max={20} value={pacotesPorJogador}
-              onChange={e => setPacotesPorJogador(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} />
+            <NumberInput id="pacotes-por-jogador" min={1} max={20} value={pacotesPorJogador} onChange={setPacotesPorJogador} />
+            <p className="text-xs text-muted-foreground">De 1 a 20.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="figurinhas-por-pacote">Figurinhas por pacote</Label>
-            <Input id="figurinhas-por-pacote" type="number" min={1} max={30} value={figurinhasPorPacote}
-              onChange={e => setFigurinhasPorPacote(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />
+            <NumberInput id="figurinhas-por-pacote" min={1} max={30} value={figurinhasPorPacote} onChange={setFigurinhasPorPacote} />
+            <p className="text-xs text-muted-foreground">De 1 a 30.</p>
             {figurinhasPorPacote !== sugestao && (
               <button type="button" className="text-xs font-bold text-primary hover:underline" onClick={() => setFigurinhasPorPacote(sugestao)}>
                 Usar sugestão: {sugestao} (≈ páginas ÷ 4)

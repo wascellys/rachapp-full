@@ -703,3 +703,45 @@ class AlbumTests(BaseRachaTestCase):
         self.como(self.jogador).post(self.url('abrir/'), {}, format='json')
         ranking_depois = self.como(self.jogador).get(f'/api/v1/rachas/{self.racha.id}/ranking/').data
         self.assertEqual(ranking_antes, ranking_depois)
+
+
+# ─── Padronização de nomes ──────────────────────────────────────────────────
+
+from .nomes import formatar_nome  # noqa: E402
+
+
+class NomesTests(APITestCase):
+    def test_formatar_nome(self):
+        casos = {
+            'JOÃO DA SILVA': 'João da Silva',
+            'maria das dores': 'Maria das Dores',
+            'leonardo do NASCIMENTO': 'Leonardo do Nascimento',
+            '  diego   ALMEIDA ': 'Diego Almeida',
+            'ana-maria': 'Ana-Maria',
+            "d'ávila": "D'Ávila",
+            'É': 'É',
+            '': '',
+        }
+        for entrada, esperado in casos.items():
+            self.assertEqual(formatar_nome(entrada), esperado, entrada)
+        self.assertEqual(formatar_nome('DA SILVA', inicio=False), 'da Silva')
+        self.assertEqual(formatar_nome('de souza', inicio=True), 'De Souza')
+
+    def test_cadastro_salva_nome_padronizado(self):
+        res = APIClient().post('/api/v1/usuarios/', {
+            'username': 'caixaalta', 'email': 'caixa@teste.com', 'password': 'SenhaForte#2026',
+            'password_confirm': 'SenhaForte#2026', 'first_name': 'DIEGO', 'last_name': 'DOS SANTOS',
+            'posicao': 'MEIA',
+        }, format='json')
+        self.assertIn(res.status_code, (200, 201), res.data)
+        user = User.objects.get(username='caixaalta')
+        self.assertEqual((user.first_name, user.last_name), ('Diego', 'dos Santos'))
+
+    def test_edicao_de_perfil_padroniza(self):
+        user = criar_usuario('minusculo', first_name='carlos', last_name='andrade')
+        self.assertEqual(user.get_full_name(), 'Carlos Andrade')
+        client = APIClient()
+        client.force_authenticate(user=user)
+        client.patch('/api/v1/usuarios/me/', {'first_name': 'CARLOS EDUARDO'}, format='json')
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, 'Carlos Eduardo')

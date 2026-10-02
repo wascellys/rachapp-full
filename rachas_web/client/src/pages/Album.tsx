@@ -24,7 +24,7 @@ import {
   type JogadorAlbum,
   type PaginaAlbum,
 } from "@/lib/album";
-import { iniciais, mensagemErro, posicaoLabel } from "@/lib/format";
+import { iniciais, mensagemErro, nomeCurto, posicaoLabel } from "@/lib/format";
 import { invalidateRachaCache } from "@/lib/useRachaCache";
 
 type Filtro = "todas" | "faltando" | "completas" | "colar";
@@ -318,7 +318,10 @@ export default function Album() {
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="truncate text-sm font-bold" title={c.nome}>{c.nome}</span>
+                          <span className="truncate text-sm font-bold" title={c.nome}>
+                            <span className="sm:hidden">{nomeCurto(c.nome)}</span>
+                            <span className="hidden sm:inline">{c.nome}</span>
+                          </span>
                           <span className="shrink-0 text-sm font-black tabular-nums">{c.coladas} <span className="text-xs text-muted-foreground">({c.percentual}%)</span></span>
                         </div>
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">

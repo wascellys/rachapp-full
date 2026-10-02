@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { iniciais, posicaoLabel } from "@/lib/format";
+import { formatarNome, iniciais, nomeCurto, posicaoLabel } from "@/lib/format";
 import {
   calcularRating,
   TIER_THEME,
@@ -49,7 +49,9 @@ function Estrelas({ tier, cor }: { tier: CardRating["tier"]; cor: string }) {
 }
 
 export function PlayerCardFront({ player, rating, theme }: FaceProps) {
-  const nomeExibido = (player.name.length > 14 && player.username ? player.username : player.name) || "Jogador";
+  const nomeFormatado = formatarNome(player.name);
+  // Na frente da carta o espaço é curto: nomes longos viram "Primeiro Último"
+  const nomeExibido = (nomeFormatado.length > 14 ? nomeCurto(nomeFormatado) : nomeFormatado) || "Jogador";
   const atributos = [...rating.atributos.slice(0, 5), { sigla: "PTS", nome: "Pontos", valor: player.points }];
   const [fotoFalhou, setFotoFalhou] = useState(false);
 
@@ -90,7 +92,7 @@ export function PlayerCardFront({ player, rating, theme }: FaceProps) {
 
       {/* Nome + atributos */}
       <div className="absolute inset-x-0 z-20 flex flex-col items-center px-5" style={{ bottom: 34, color: theme.ink }}>
-        <h3 className="rc-name" title={player.name} style={{ fontSize: nomeExibido.length > 13 ? 20 : undefined }}>{nomeExibido}</h3>
+        <h3 className="rc-name" title={nomeFormatado} style={{ fontSize: nomeExibido.length > 13 ? 20 : undefined }}>{nomeExibido}</h3>
         <div className="mb-2 mt-1 h-px w-4/5" style={{ background: `linear-gradient(90deg,transparent,${theme.inkSoft},transparent)` }} />
         <div className="grid w-full grid-cols-3 gap-x-2 gap-y-1">
           {atributos.map(a => (
@@ -150,13 +152,14 @@ export function PlayerCardBack({ player, rating, theme }: FaceProps) {
     { label: "G+A/J", valor: matches > 0 ? ((goals + assists) / matches).toFixed(1) : "0.0" },
   ];
   const proximo = rating.proximoTier ? TIER_THEME[rating.proximoTier].label : null;
+  const nomeFormatado = formatarNome(player.name);
 
   return (
     <Shell theme={theme}>
       <div className="relative z-20 flex h-full flex-col items-center px-5 pb-10 pt-8" style={{ color: theme.ink }}>
         <div className="flex w-full items-center justify-between">
           <div className="min-w-0">
-            <p className="rc-back-name truncate" style={{ fontSize: (player.name || "").length > 13 ? 16 : undefined }}>{player.name || "Jogador"}</p>
+            <p className="rc-back-name truncate" title={nomeFormatado} style={{ fontSize: nomeFormatado.length > 13 ? 16 : undefined }}>{nomeFormatado || "Jogador"}</p>
             <p className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: theme.inkSoft }}>
               {posicaoLabel(player.position)}{player.username ? ` · @${player.username}` : ""}
             </p>

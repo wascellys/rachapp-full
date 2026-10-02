@@ -37,6 +37,7 @@ import {
   iniciais,
   mensagemErro,
   nomeCompleto,
+  nomeCurto,
   posicaoLabel,
 } from "@/lib/format";
 import type { PlayerCardData } from "@/lib/playerRating";
@@ -446,7 +447,10 @@ export default function RachaDetails() {
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="min-w-0">
-                                    <p className="truncate font-bold" title={item.jogador_nome}>{item.jogador_nome}</p>
+                                    <p className="truncate font-bold" title={item.jogador_nome}>
+                                  <span className="sm:hidden">{nomeCurto(item.jogador_nome)}</span>
+                                  <span className="hidden sm:inline">{item.jogador_nome}</span>
+                                </p>
                                     <p className="truncate text-xs font-semibold text-muted-foreground">
                                       <span className="sm:hidden">{item.presencas}J · {item.gols}G · {item.assistencias}A</span>
                                       <span className="hidden sm:inline">{posicaoLabel(item.posicao)}</span>
